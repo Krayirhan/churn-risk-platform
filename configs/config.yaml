@@ -1,0 +1,48 @@
+# ============================================================================
+# config.yaml — Projenin Merkezi Konfigürasyon Dosyası
+# ============================================================================
+# NEDEN BU DOSYA VAR?
+#   Tüm dosya yolları, sabit değerler ve proje geneli parametreler tek bir
+#   yerden yönetilir. Hiçbir Python dosyasında "magic string" veya hardcoded
+#   yol olmayacak. Değişiklik yapman gerektiğinde sadece buraya dokunursun.
+# ============================================================================
+
+# --- VERİ KAYNAKLARI ---
+# Notebook'un ürettiği artifact'lar ve ham veri yolları
+data:
+  raw_path: "data/raw/churn.csv"                          # Orijinal telco CSV
+  notebook_artifacts_dir: "notebooks/artifacts"            # Notebook çıktı klasörü
+  npz_filename: "telco_prepared_dataset.npz"               # Notebook'un export ettiği hazır matris
+  metadata_filename: "export_metadata.json"                # Notebook'un export metadata'sı
+  summary_filename: "notebook_summary.json"                # Notebook özet raporu
+
+# --- MODEL ARTİFACT'LARI ---
+# Eğitim sonucu üretilen dosyaların kaydedileceği yollar
+artifacts:
+  base_dir: "artifacts"                                    # Ana artifact klasörü
+  preprocessor_path: "artifacts/preprocessor.pkl"          # Fit edilmiş ColumnTransformer
+  model_path: "artifacts/model.pkl"                        # En iyi model (pickle)
+  metrics_path: "artifacts/metrics.json"                   # Değerlendirme metrikleri
+  confusion_matrix_path: "artifacts/confusion_matrix.json" # Confusion matrix detayı
+  train_data_path: "artifacts/train.npz"                   # Train split (cache)
+  test_data_path: "artifacts/test.npz"                     # Test split (cache)
+
+# --- TRAIN / TEST AYRIM PARAMETRELERİ ---
+split:
+  test_size: 0.2          # Verinin %20'si test seti
+  random_state: 42        # Tekrarlanabilirlik için sabit seed
+  stratify: true          # Churn oranını train/test'te korumak için stratified split
+
+# --- HEDEF DEĞİŞKEN ve KİMLİK ---
+target_col: "Churn"       # Tahmin edilecek sütun (0/1)
+id_col: "customerID"      # Satır kimliği — modele girmemeli, drop edilecek
+
+# --- CROSS-VALIDATION ---
+cv:
+  n_folds: 5              # 5-Fold Stratified Cross-Validation
+  scoring: "f1"           # Churn imbalanced → F1 daha anlamlı (accuracy yanıltıcı)
+
+# --- LOGLAMA ---
+logging:
+  level: "INFO"
+  log_dir: "logs"

@@ -1,0 +1,59 @@
+# ============================================================================
+# model_params.yaml — Model Hiperparametre Tanımları
+# ============================================================================
+# NEDEN BU DOSYA VAR?
+#   Model seçimi ve hiperparametre tuning'i bu YAML'dan okunur.
+#   model_trainer.py bu dosyayı okuyup GridSearchCV ile en iyi
+#   kombinasyonu bulur. Yeni model denemek istediğinde sadece buraya ekle.
+#
+# CHURN PROBLEMİNDE ÖNEMLİ NOKTALAR:
+#   - Veri dengesiz (imbalanced): ~73% No Churn, ~27% Yes Churn
+#   - Bu yüzden class_weight="balanced" veya scale_pos_weight kullanıyoruz
+#   - Metrik olarak Accuracy DEĞİL, F1-score / Recall kullanıyoruz
+#   - Recall yüksek olmalı: churn eden müşteriyi kaçırmak maliyetli!
+# ============================================================================
+
+models:
+
+  # --- LOJİSTİK REGRESYON ---
+  # En basit baseline. Yorumlanabilir, hızlı, feature importance verir.
+  # class_weight: "balanced" → azınlık sınıfına (Churn=1) daha fazla ağırlık verir.
+  LogisticRegression:
+    C: [0.01, 0.1, 1.0, 10.0]         # Regularization gücü (küçük C = güçlü reg.)
+    penalty: ["l2"]                     # L2 regularization (Ridge)
+    solver: ["lbfgs"]                   # Küçük-orta veri setleri için uygun
+    max_iter: [1000]                    # Yakınsama için yeterli iterasyon
+    class_weight: ["balanced"]          # İmbalanced data için ZORUNLU
+
+  # --- RANDOM FOREST ---
+  # Ensemble yöntem. Overfitting'e dayanıklı, feature importance sağlar.
+  # class_weight: "balanced" → her ağaçta churn sınıfına daha fazla ağırlık verir.
+  RandomForestClassifier:
+    n_estimators: [100, 300]            # Ağaç sayısı (fazla = daha stabil ama yavaş)
+    max_depth: [5, 10, null]            # Ağaç derinliği (null = sınırsız)
+    min_samples_split: [5, 10]          # Dallanma için gereken minimum örnek
+    class_weight: ["balanced"]          # İmbalanced data için ZORUNLU
+    random_state: [42]                  # Tekrarlanabilirlik
+
+  # --- XGBOOST ---
+  # Gradient boosting. Genellikle en iyi performansı verir.
+  # scale_pos_weight: pozitif sınıfın ağırlığı (≈ neg_count / pos_count)
+  # Telco verisi: ~5174 No / ~1869 Yes ≈ 2.77 → 3.0 kullanıyoruz
+  XGBClassifier:
+    learning_rate: [0.01, 0.05, 0.1]   # Adım büyüklüğü (küçük = yavaş ama stabil)
+    max_depth: [3, 5, 7]               # Ağaç derinliği
+    n_estimators: [100, 300]            # Boosting round sayısı
+    subsample: [0.8]                    # Her ağaçta verinin %80'ini kullan (overfitting önler)
+    colsample_bytree: [0.8]            # Her ağaçta feature'ların %80'ini kullan
+    scale_pos_weight: [3.0]            # İmbalanced data: churn sınıfına 3x ağırlık
+    eval_metric: ["logloss"]           # Binary classification kaybı
+    random_state: [42]
+
+  # --- GRADIENT BOOSTING (sklearn) ---
+  # XGBoost'un sklearn versiyonu. Daha basit ama yeterli.
+  GradientBoostingClassifier:
+    n_estimators: [100, 300]            # Boosting round sayısı
+    learning_rate: [0.05, 0.1]         # Adım büyüklüğü
+    max_depth: [3, 5]                  # Ağaç derinliği
+    subsample: [0.8]                   # Verinin %80'i
+    random_state: [42]

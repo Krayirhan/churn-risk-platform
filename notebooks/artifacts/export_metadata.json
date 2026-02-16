@@ -1,0 +1,8 @@
+{
+  "n_rows": 7043,
+  "n_features_after_preprocess": 59,
+  "pca_k90": 16,
+  "pca_k95": 21,
+  "target_col": "Churn",
+  "random_state": 42
+}

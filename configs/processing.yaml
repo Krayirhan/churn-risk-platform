@@ -1,0 +1,84 @@
+# ============================================================================
+# processing.yaml — Veri İşleme ve Feature Engineering Kuralları
+# ============================================================================
+# NEDEN BU DOSYA VAR?
+#   Notebook'ta hardcoded olan kolon isimleri ve FE mantığı buradan okunur.
+#   Böylece kolon adı değiştiğinde veya yeni feature eklendiğinde
+#   Python koduna dokunmana gerek kalmaz — sadece bu YAML'ı güncelle.
+#
+# NOTEBOOK İLE BAĞLANTI:
+#   Bu kurallar notebook'taki TelcoConfig, TelcoCleaner ve 
+#   TelcoFeatureEngineer sınıflarından çıkarılmıştır.
+# ============================================================================
+
+# --- SÜTUN TİPLERİ ---
+# Orijinal veri setindeki sütunlar (feature engineering ÖNCESİ)
+columns:
+
+  # Sayısal sütunlar: İmputer(median) + StandardScaler uygulanacak
+  numeric:
+    - tenure
+    - MonthlyCharges
+    - TotalCharges
+
+  # Kategorik sütunlar: İmputer(most_frequent) + OneHotEncoder uygulanacak
+  categorical:
+    - gender
+    - SeniorCitizen
+    - Partner
+    - Dependents
+    - PhoneService
+    - MultipleLines
+    - InternetService
+    - OnlineSecurity
+    - OnlineBackup
+    - DeviceProtection
+    - TechSupport
+    - StreamingTV
+    - StreamingMovies
+    - Contract
+    - PaperlessBilling
+    - PaymentMethod
+
+  # Modele GİRMEMESİ gereken sütunlar (kimlik, gereksiz)
+  drop:
+    - customerID
+
+# --- ADD-ON SERVİS SÜTUNLARI ---
+# TotalAddOnServices feature'ı bu sütunlardan hesaplanır
+# (Yes/No → 1/0 toplamı = müşterinin aldığı ek hizmet sayısı)
+addon_service_cols:
+  - OnlineSecurity
+  - OnlineBackup
+  - DeviceProtection
+  - TechSupport
+  - StreamingTV
+  - StreamingMovies
+
+# --- FEATURE ENGINEERING SONRASI EKLENEN SÜTUNLAR ---
+# Notebook'taki TelcoFeatureEngineer.add_features() tarafından üretilen 10 yeni feature
+# Bu liste data_transformation.py'de referans olarak kullanılır
+engineered_features:
+  - LoyaltyIndex                        # log1p(tenure) → sadakat indeksi
+  - TotalAddOnServices                  # Toplam ek hizmet sayısı (0-6)
+  - UnitCost                            # MonthlyCharges / (TotalAddOnServices + 1)
+  - AvgPaidPerMonth                     # TotalCharges / (tenure + 1) → aylık ortalama ödeme
+  - ChargeGap                           # |MonthlyCharges - AvgPaidPerMonth| → fiyat tutarsızlığı
+  - RiskScope_Fiber_NoSupport_NoSec     # Fiber var ama destek/güvenlik yok → risk flag
+  - IsMonthToMonth                      # Month-to-month sözleşme → yüksek churn riski
+  - IsPaperless                         # Kağıtsız fatura → dijital müşteri profili
+  - IsElectronicCheck                   # Electronic check ödeme → churn ile ilişkili
+  - TenureBucket                        # tenure segmentasyonu: 0-6, 7-12, 13-24, 25-48, 49-72, 72+
+
+# --- TENURE BUCKET TANIMLARI ---
+# pd.cut parametreleri
+tenure_bins: [-1, 6, 12, 24, 48, 72, 1000000000]
+tenure_labels: ["0-6", "7-12", "13-24", "25-48", "49-72", "72+"]
+
+# --- PREPROCESSING PIPELINE AYARLARI ---
+preprocessing:
+  numeric_impute_strategy: "median"     # Eksik sayıları medyan ile doldur
+  categorical_impute_strategy: "most_frequent"  # Eksik kategorikleri mod ile doldur
+  scaler: "StandardScaler"              # Z-score normalizasyonu (mean=0, std=1)
+  encoder: "OneHotEncoder"              # Kategorikleri binary vektöre çevir
+  handle_unknown: "ignore"              # Görmediği kategoriyi sıfır vektör yap

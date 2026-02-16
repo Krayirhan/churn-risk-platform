@@ -1,0 +1,282 @@
+{
+  "churn_rate": 0.2654,
+  "lowest_fill_rate_columns": [
+    {
+      "column": "customerID",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "MonthlyCharges",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "PaymentMethod",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "PaperlessBilling",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "Contract",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "StreamingMovies",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "StreamingTV",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "TechSupport",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "DeviceProtection",
+      "fill_rate": 1.0,
+      "null_count": 0
+    },
+    {
+      "column": "TotalCharges",
+      "fill_rate": 1.0,
+      "null_count": 0
+    }
+  ],
+  "top_chi_square": [
+    {
+      "feature": "Contract",
+      "test": "chi_square",
+      "chi2": 1184.5965720837926,
+      "dof": 2,
+      "p_value": 5.863038300673391e-258,
+      "n_unique": 3
+    },
+    {
+      "feature": "TenureBucket",
+      "test": "chi_square",
+      "chi2": 927.329274556515,
+      "dof": 4,
+      "p_value": 1.9959341029566983e-199,
+      "n_unique": 5
+    },
+    {
+      "feature": "OnlineSecurity",
+      "test": "chi_square",
+      "chi2": 849.9989679615965,
+      "dof": 2,
+      "p_value": 2.6611496351765517e-185,
+      "n_unique": 3
+    },
+    {
+      "feature": "TechSupport",
+      "test": "chi_square",
+      "chi2": 828.1970684587394,
+      "dof": 2,
+      "p_value": 1.4430840279998987e-180,
+      "n_unique": 3
+    },
+    {
+      "feature": "InternetService",
+      "test": "chi_square",
+      "chi2": 732.309589667794,
+      "dof": 2,
+      "p_value": 9.571788222840544e-160,
+      "n_unique": 3
+    },
+    {
+      "feature": "PaymentMethod",
+      "test": "chi_square",
+      "chi2": 648.1423274814,
+      "dof": 3,
+      "p_value": 3.6823546520097993e-140,
+      "n_unique": 4
+    },
+    {
+      "feature": "OnlineBackup",
+      "test": "chi_square",
+      "chi2": 601.812790113409,
+      "dof": 2,
+      "p_value": 2.0797592160864276e-131,
+      "n_unique": 3
+    },
+    {
+      "feature": "DeviceProtection",
+      "test": "chi_square",
+      "chi2": 558.419369407389,
+      "dof": 2,
+      "p_value": 5.505219496457244e-122,
+      "n_unique": 3
+    },
+    {
+      "feature": "StreamingMovies",
+      "test": "chi_square",
+      "chi2": 375.6614793452656,
+      "dof": 2,
+      "p_value": 2.667756755723681e-82,
+      "n_unique": 3
+    },
+    {
+      "feature": "StreamingTV",
+      "test": "chi_square",
+      "chi2": 374.2039433109813,
+      "dof": 2,
+      "p_value": 5.528994485739183e-82,
+      "n_unique": 3
+    }
+  ],
+  "top_welch_ttest": [
+    {
+      "feature": "IsMonthToMonth",
+      "test": "welch_ttest",
+      "t_stat": 45.27516546095492,
+      "p_value": 0.0,
+      "mean_churn1": 0.8855002675227395,
+      "mean_churn0": 0.4290684190181678,
+      "diff_mean": 0.4564318485045717
+    },
+    {
+      "feature": "tenure",
+      "test": "welch_ttest",
+      "t_stat": -34.823818696312976,
+      "p_value": 1.1954945472607151e-232,
+      "mean_churn1": 17.979133226324237,
+      "mean_churn0": 37.56996521066873,
+      "diff_mean": -19.59083198434449
+    },
+    {
+      "feature": "LoyaltyIndex",
+      "test": "welch_ttest",
+      "t_stat": -31.45025867965394,
+      "p_value": 3.052895087668501e-187,
+      "mean_churn1": 2.319183121044434,
+      "mean_churn0": 3.2961234406172437,
+      "diff_mean": -0.9769403195728099
+    },
+    {
+      "feature": "RiskScope_Fiber_NoSupport_NoSec",
+      "test": "welch_ttest",
+      "t_stat": 29.05480036477891,
+      "p_value": 5.371290420164207e-161,
+      "mean_churn1": 0.5195291599785982,
+      "mean_churn0": 0.15345960572091225,
+      "diff_mean": 0.36606955425768595
+    },
+    {
+      "feature": "ChargeGap",
+      "test": "welch_ttest",
+      "t_stat": 27.327227988907406,
+      "p_value": 7.090131007995904e-142,
+      "mean_churn1": 11.90442636225016,
+      "mean_churn0": 3.8880416584826345,
+      "diff_mean": 8.016384703767525
+    },
+    {
+      "feature": "IsElectronicCheck",
+      "test": "welch_ttest",
+      "t_stat": 24.972221945649068,
+      "p_value": 4.4638203164563953e-125,
+      "mean_churn1": 0.5730337078651685,
+      "mean_churn0": 0.2500966370313104,
+      "diff_mean": 0.3229370708338581
+    },
+    {
+      "feature": "UnitCost",
+      "test": "welch_ttest",
+      "t_stat": 23.41696941351851,
+      "p_value": 1.0515779404586934e-109,
+      "mean_churn1": 32.97708247343881,
+      "mean_churn0": 22.78547382056804,
+      "diff_mean": 10.191608652870773
+    },
+    {
+      "feature": "TotalCharges",
+      "test": "welch_ttest",
+      "t_stat": -18.706618288177044,
+      "p_value": 5.902580609072126e-75,
+      "mean_churn1": 1531.7960941680042,
+      "mean_churn0": 2549.911441824507,
+      "diff_mean": -1018.115347656503
+    },
+    {
+      "feature": "MonthlyCharges",
+      "test": "welch_ttest",
+      "t_stat": 18.407526676414673,
+      "p_value": 8.59244933154705e-73,
+      "mean_churn1": 74.44133226324237,
+      "mean_churn0": 61.26512369540008,
+      "diff_mean": 13.176208567842295
+    },
+    {
+      "feature": "IsPaperless",
+      "test": "welch_ttest",
+      "t_stat": 17.50785153153739,
+      "p_value": 4.802978717717197e-66,
+      "mean_churn1": 0.7490636704119851,
+      "mean_churn0": 0.5355624275222265,
+      "diff_mean": 0.21350124288975858
+    }
+  ],
+  "top_vif": [
+    {
+      "feature": "AvgPaidPerMonth",
+      "vif": 1312.645073116737
+    },
+    {
+      "feature": "MonthlyCharges",
+      "vif": 1267.9406188703388
+    },
+    {
+      "feature": "ChargeGap",
+      "vif": 114.21785818173602
+    },
+    {
+      "feature": "tenure",
+      "vif": 26.219181667082758
+    },
+    {
+      "feature": "LoyaltyIndex",
+      "vif": 21.072107277624347
+    },
+    {
+      "feature": "TotalCharges",
+      "vif": 16.1461868440147
+    },
+    {
+      "feature": "TotalAddOnServices",
+      "vif": 8.300178925797386
+    },
+    {
+      "feature": "UnitCost",
+      "vif": 3.4946480377701072
+    },
+    {
+      "feature": "RiskScope_Fiber_NoSupport_NoSec",
+      "vif": 2.3140189614633737
+    },
+    {
+      "feature": "IsMonthToMonth",
+      "vif": 2.140539293641714
+    }
+  ],
+  "pca_k90": 16,
+  "pca_k95": 21,
+  "artifacts": [
+    "data_health_audit.parquet",
+    "chi_square_results.parquet",
+    "welch_ttest_results.parquet",
+    "vif.parquet",
+    "telco_prepared_dataset.npz",
+    "export_metadata.json",
+    "notebook_summary.json"
+  ]
+}

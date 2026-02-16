@@ -1,0 +1,63 @@
+# ============================================================================
+# .gitignore — Git'e GÖNDERİLMEMESİ gereken dosyalar
+# ============================================================================
+
+# ─── Python ───
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# ─── Virtual Environment ───
+.venv/
+venv/
+ENV/
+
+# ─── IDE ───
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Jupyter Notebook ───
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── Logs ───
+logs/
+*.log
+
+# ─── Model Artifacts (büyük dosyalar — DVC ile yönetilmeli) ───
+artifacts/*.pkl
+artifacts/*.npz
+models/*.pkl
+
+# ─── Notebook Artifacts (büyük matrisler) ───
+notebooks/artifacts/*.npz
+notebooks/artifacts/*.parquet
+
+# ─── Data (ham veri repo'ya girmemeli) ───
+data/raw/*.csv
+data/processed/
+data/external/
+
+# ─── Environment ───
+.env
+.env.*
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── pytest ───
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
