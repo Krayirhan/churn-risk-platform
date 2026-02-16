@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Churn Risk Dashboard - Müşteri Kayıp Tahmin Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- ÜST MENÜ -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>Churn Risk Platform</h1>
+            </div>
+            <nav class="nav">
+                <a href="#dashboard" class="nav-link active">
+                    <i class="fas fa-home"></i> Ana Sayfa
+                </a>
+                <a href="#predict" class="nav-link">
+                    <i class="fas fa-user-check"></i> Tahmin Yap
+                </a>
+                <a href="#reports" class="nav-link">
+                    <i class="fas fa-chart-bar"></i> Raporlar
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ANA İÇERİK -->
+    <main class="main-content">
+        <div class="container">
+            <!-- DURUM KARTLARI -->
+            <section class="stats-section">
+                <h2 class="section-title">Sistem Durumu</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 class="stat-title">Model Durumu</h3>
+                            <p class="stat-value" id="modelStatus">Yükleniyor...</p>
+                            <span class="stat-label">Son Güncelleme: <span id="lastUpdate">-</span></span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 class="stat-title">Model Doğruluğu</h3>
+                            <p class="stat-value" id="modelAccuracy">%0.00</p>
+                            <span class="stat-label">Aktif Model: XGBoost</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 class="stat-title">Drift Durumu</h3>
+                            <p class="stat-value" id="driftStatus">Kontrol ediliyor...</p>
+                            <span class="stat-label">Veri kalitesi takibi</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 class="stat-title">Bugün Tahmin</h3>
+                            <p class="stat-value" id="todayPredictions">0</p>
+                            <span class="stat-label">Toplam analiz edilen müşteri</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAHMİN FORMU -->
+            <section class="prediction-section">
+                <h2 class="section-title">Müşteri Churn Tahmini</h2>
+                <div class="form-container">
+                    <form id="predictionForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-venus-mars"></i> Cinsiyet
+                                </label>
+                                <select id="gender" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Male">Erkek</option>
+                                    <option value="Female">Kadın</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-user-clock"></i> Yaşlı Vatandaş
+                                </label>
+                                <select id="seniorCitizen" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="0">Hayır</option>
+                                    <option value="1">Evet</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-heart"></i> Partneri Var mı?
+                                </label>
+                                <select id="partner" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No">Hayır</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-child"></i> Bakmakla Yükümlü
+                                </label>
+                                <select id="dependents" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No">Hayır</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-calendar-alt"></i> Müşteri Süresi (Ay)
+                                </label>
+                                <input type="number" id="tenure" min="0" max="72" required 
+                                       placeholder="Örn: 12">
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-dollar-sign"></i> Aylık Ücret (TL)
+                                </label>
+                                <input type="number" id="monthlyCharges" step="0.01" min="0" required 
+                                       placeholder="Örn: 70.35">
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-wallet"></i> Toplam Ödeme (TL)
+                                </label>
+                                <input type="number" id="totalCharges" step="0.01" min="0" required 
+                                       placeholder="Örn: 1397.48">
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-wifi"></i> İnternet Hizmeti
+                                </label>
+                                <select id="internetService" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="DSL">DSL</option>
+                                    <option value="Fiber optic">Fiber optik</option>
+                                    <option value="No">Yok</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-phone"></i> Telefon Hizmeti
+                                </label>
+                                <select id="phoneService" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No">Hayır</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-phone-alt"></i> Çoklu Hat
+                                </label>
+                                <select id="multipleLines" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No">Hayır</option>
+                                    <option value="No phone service">Telefon yok</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-file-contract"></i> Sözleşme Türü
+                                </label>
+                                <select id="contract" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Month-to-month">Aylık</option>
+                                    <option value="One year">1 Yıllık</option>
+                                    <option value="Two year">2 Yıllık</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-credit-card"></i> Ödeme Yöntemi
+                                </label>
+                                <select id="paymentMethod" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Electronic check">Elektronik çek</option>
+                                    <option value="Mailed check">Posta çeki</option>
+                                    <option value="Bank transfer (automatic)">Otomatik banka</option>
+                                    <option value="Credit card (automatic)">Otomatik kredi kartı</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- EK HİZMETLER -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-shield-alt"></i> Online Güvenlik</label>
+                                <select id="onlineSecurity" required>
+                                    <option value="No">Hayır</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No internet service">İnternet yok</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fas fa-cloud"></i> Online Yedekleme</label>
+                                <select id="onlineBackup" required>
+                                    <option value="No">Hayır</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No internet service">İnternet yok</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fas fa-mobile-alt"></i> Cihaz Koruması</label>
+                                <select id="deviceProtection" required>
+                                    <option value="No">Hayır</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No internet service">İnternet yok</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fas fa-headset"></i> Teknik Destek</label>
+                                <select id="techSupport" required>
+                                    <option value="No">Hayır</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No internet service">İnternet yok</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-tv"></i> TV Yayını</label>
+                                <select id="streamingTV" required>
+                                    <option value="No">Hayır</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No internet service">İnternet yok</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fas fa-film"></i> Film Yayını</label>
+                                <select id="streamingMovies" required>
+                                    <option value="No">Hayır</option>
+                                    <option value="Yes">Evet</option>
+                                    <option value="No internet service">İnternet yok</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fas fa-file-invoice"></i> Dijital Fatura</label>
+                                <select id="paperlessBilling" required>
+                                    <option value="No">Hayır</option>
+                                    <option value="Yes">Evet</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <!-- Boş alan dengesi için -->
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-rocket"></i> Tahmin Yap
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                <i class="fas fa-redo"></i> Temizle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SONUÇ ALANI -->
+            <section class="result-section" id="resultSection" style="display: none;">
+                <h2 class="section-title">Tahmin Sonucu</h2>
+                <div class="result-container">
+                    <div class="result-main">
+                        <div class="result-icon" id="resultIcon">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div class="result-info">
+                            <h3 id="resultTitle">İşlem Yapılıyor...</h3>
+                            <p id="resultDescription">Lütfen bekleyiniz</p>
+                        </div>
+                    </div>
+                    <div class="result-details" id="resultDetails">
+                        <!-- Dinamik içerik buraya gelecek -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Churn Risk Platform | Telco Müşteri Kayıp Tahmin Sistemi</p>
+            <p>Powered by Machine Learning & AI</p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
