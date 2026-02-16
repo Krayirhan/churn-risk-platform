@@ -339,7 +339,23 @@ async def predict_single(customer: CustomerInput):
     """
     try:
         pipeline = get_pipeline()
-        result = pipeline.predict(customer.model_dump())
+        input_data = customer.model_dump()
+        result = pipeline.predict(input_data)
+
+        # ─── Tahmin Loglama ───
+        try:
+            from src.components.prediction_logger import PredictionLogger
+            pred_logger = PredictionLogger()
+            pred_logger.log(
+                input_features=input_data,
+                prediction=result["prediction"],
+                churn_probability=result["churn_probability"],
+                risk_level=result["risk_level"],
+                customer_id=result.get("customerID", "unknown"),
+            )
+        except Exception as log_err:
+            logging.warning(f"Tahmin loglama hatası (kritik değil): {log_err}")
+
         return PredictionOutput(**result)
 
     except FileNotFoundError as e:
@@ -374,6 +390,21 @@ async def predict_batch(batch: BatchInput):
         data_list = [c.model_dump() for c in batch.customers]
         results = pipeline.predict_batch(data_list)
 
+        # ─── Toplu Tahmin Loglama ───
+        try:
+            from src.components.prediction_logger import PredictionLogger
+            pred_logger = PredictionLogger()
+            for r, inp in zip(results, data_list):
+                pred_logger.log(
+                    input_features=inp,
+                    prediction=r["prediction"],
+                    churn_probability=r["churn_probability"],
+                    risk_level=r["risk_level"],
+                    customer_id=r.get("customerID", "unknown"),
+                )
+        except Exception as log_err:
+            logging.warning(f"Toplu loglama hatası (kritik değil): {log_err}")
+
         predictions = [PredictionOutput(**r) for r in results]
         churn_count = sum(1 for r in results if r["prediction"] == 1)
 
@@ -392,3 +423,112 @@ async def predict_batch(batch: BatchInput):
     except Exception as e:
         logging.error(f"Toplu tahmin hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Tahmin hatası: {str(e)}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MONİTORİNG ENDPOINT'LERİ
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/monitor/stats", tags=["Monitoring"])
+async def monitor_stats(days: int = 7):
+    """
+    Son N günün tahmin istatistiklerini döndürür.
+
+    Toplam tahmin sayısı, churn oranı, risk dağılımı.
+    """
+    try:
+        from src.components.prediction_logger import PredictionLogger
+        pred_logger = PredictionLogger()
+        return pred_logger.get_stats(days=days)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/monitor/drift", tags=["Monitoring"])
+async def monitor_drift():
+    """
+    Production tahminlerinde data drift olup olmadığını kontrol eder.
+
+    Son tahminlerin feature dağılımını eğitim verisinin referans
+    istatistikleriyle karşılaştırır.
+    """
+    try:
+        from src.components.prediction_logger import PredictionLogger
+        from src.components.drift_detector import DriftDetector
+
+        pred_logger = PredictionLogger()
+        features_df = pred_logger.get_features_df(n=500, days=7)
+
+        if features_df.empty:
+            return {
+                "drift_detected": False,
+                "message": "Drift analizi için yeterli tahmin logu yok",
+            }
+
+        detector = DriftDetector()
+        report = detector.analyze(features_df)
+        return report
+
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Referans istatistikler bulunamadı: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/monitor/health-report", tags=["Monitoring"])
+async def monitor_health_report():
+    """
+    Tam monitoring raporu: performans + drift durumunu birleştirir.
+    """
+    try:
+        from src.components.model_monitor import ModelMonitor
+        from src.utils.common import load_json
+
+        monitor = ModelMonitor()
+
+        # Baseline metrikleri güncel metrik olarak kullan (ground truth yoksa)
+        current_metrics = None
+        if os.path.exists("artifacts/metrics.json"):
+            data = load_json("artifacts/metrics.json")
+            current_metrics = data.get("metrics", {})
+
+        report = monitor.full_check(current_metrics=current_metrics)
+        return report
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/monitor/retrain", tags=["Monitoring"])
+async def trigger_retrain(force: bool = False):
+    """
+    Manuel retrain tetikler.
+
+    **force=True** ise cooldown ve diğer kontrolleri atlar.
+    """
+    try:
+        from src.pipeline.retrain_pipeline import RetrainPipeline
+
+        pipeline = RetrainPipeline()
+        result = pipeline.run(reason="manual", force=force)
+        return result
+
+    except Exception as e:
+        logging.error(f"Retrain hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Retrain hatası: {str(e)}")
+
+
+@app.get("/monitor/retrain-history", tags=["Monitoring"])
+async def retrain_history():
+    """
+    Retrain geçmişini döndürür.
+    """
+    try:
+        from src.components.model_monitor import ModelMonitor
+        monitor = ModelMonitor()
+        return {"history": monitor.get_retrain_history()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

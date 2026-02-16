@@ -1,0 +1,84 @@
+# ============================================================================
+# monitoring.yaml — İzleme, Drift Algılama ve Yeniden Eğitim Kuralları
+# ============================================================================
+# NEDEN BU DOSYA VAR?
+#   Model production'a çıktıktan sonra verinin ve performansın zamanla
+#   bozulup bozulmadığını kontrol eden kurallar burada tanımlıdır.
+#   Hiçbir Python dosyasında hard-coded eşik değeri olmayacak.
+#
+# KAVRAMLAR:
+#   - Data Drift   : Girdi dağılımı eğitimden farklılaştı mı?
+#   - Model Decay  : F1/AUC baseline'ın altına düştü mü?
+#   - Retrain      : Drift veya decay tespit edildiğinde otomatik eğitim
+# ============================================================================
+
+# ─── TAHMİN LOGLAMA ───
+# Her tahmin sonucu JSON-lines dosyasına yazılır → drift analizi için veri kaynağı
+prediction_log:
+  enabled: true
+  log_dir: "logs/predictions"                     # Tahmin loglarının tutulacağı klasör
+  file_prefix: "predictions"                      # predictions_2026-02-16.jsonl
+  rotation: "daily"                               # Günlük yeni dosya
+  max_retention_days: 90                           # 90 günden eski loglar silinebilir
+  fields:                                          # Loglanacak alanlar
+    - timestamp
+    - customerID
+    - input_features
+    - prediction
+    - churn_probability
+    - risk_level
+    - model_version
+
+# ─── DATA DRIFT ALGILAMA ───
+# Eğitim verisinin dağılımıyla production verisini karşılaştırır
+drift:
+  enabled: true
+  reference_data_path: "artifacts/reference_stats.json"   # Eğitim verisi istatistikleri
+  min_sample_size: 50                              # Drift analizi için minimum tahmin sayısı
+
+  # Sayısal feature'lar için: Kolmogorov-Smirnov testi
+  numerical:
+    method: "ks_test"                              # Kolmogorov-Smirnov iki-örneklem testi
+    p_value_threshold: 0.05                        # p < 0.05 → drift VAR
+    features:                                      # İzlenecek sayısal feature'lar
+      - tenure
+      - MonthlyCharges
+      - TotalCharges
+
+  # Kategorik feature'lar için: Population Stability Index (PSI)
+  categorical:
+    method: "psi"                                  # Population Stability Index
+    psi_threshold: 0.2                             # PSI > 0.2 → önemli drift
+    features:                                      # İzlenecek kategorik feature'lar
+      - Contract
+      - InternetService
+      - PaymentMethod
+
+  # Genel drift kararı
+  alert_threshold: 0.3                             # Feature'ların %30'unda drift varsa ALERT
+
+# ─── MODEL PERFORMANS İZLEME ───
+# Baseline metriklerle karşılaştırma
+performance:
+  enabled: true
+  baseline_metrics_path: "artifacts/metrics.json"  # Eğitim sonucu üretilen metrikler
+  # Metrik baseline'ın bu oranda altına düşerse "degraded" ilan edilir
+  degradation_thresholds:
+    f1: 0.10                                       # F1 %10 düşerse → uyarı
+    recall: 0.15                                   # Recall %15 düşerse → uyarı
+    precision: 0.10                                # Precision %10 düşerse → uyarı
+    roc_auc: 0.05                                  # AUC %5 düşerse → uyarı (daha hassas)
+
+# ─── YENİDEN EĞİTİM TETİKLEYİCİLER ───
+retrain:
+  enabled: true
+  auto_retrain: false                              # true → drift algılanınca otomatik eğit
+  triggers:
+    - drift_detected                               # Data drift alert
+    - performance_degraded                         # Model performansı düştü
+    - manual                                       # Manuel tetikleme (API/CLI)
+    - scheduled                                    # Zamanlı (cron)
+  schedule:
+    interval_days: 30                              # Her 30 günde bir kontrol
+  cooldown_hours: 24                               # Ardışık retrain'ler arası minimum süre
+  history_path: "logs/retrain_history.json"        # Retrain geçmişi

@@ -157,6 +157,83 @@ def cmd_info(args) -> None:
     print("=" * 60)
 
 
+def cmd_monitor(args) -> None:
+    """
+    Model izleme raporu üretir.
+
+    Tahmin loglarından drift analizi yapar ve performans durumunu kontrol eder.
+    """
+    from src.components.prediction_logger import PredictionLogger
+    from src.components.drift_detector import DriftDetector
+    from src.components.model_monitor import ModelMonitor
+
+    logging.info("CLI → Monitoring kontrolü başlatılıyor...")
+
+    # Tahmin istatistikleri
+    pred_logger = PredictionLogger()
+    stats = pred_logger.get_stats(days=args.days if hasattr(args, 'days') else 7)
+
+    print("\n" + "=" * 60)
+    print("📊 MONİTORİNG RAPORU")
+    print("=" * 60)
+    print(f"  Toplam tahmin  : {stats.get('total_predictions', 0)}")
+    print(f"  Churn oranı    : %{stats.get('churn_rate', 0)}")
+    print(f"  Ort. olasılık  : {stats.get('avg_churn_probability', 'N/A')}")
+    print(f"  Risk dağılımı : {stats.get('risk_distribution', {})}")
+
+    # Drift analizi
+    features_df = pred_logger.get_features_df(n=500, days=7)
+    if not features_df.empty:
+        try:
+            detector = DriftDetector()
+            drift_report = detector.analyze(features_df)
+            print(f"\n  Drift Durumu   : {drift_report.get('alert_level', 'unknown')}")
+            print(f"  Drift Oranı    : %{drift_report.get('drift_ratio', 0)*100:.1f}")
+            drifted = drift_report.get('drifted_features', [])
+            if drifted:
+                print(f"  Drift Feature  : {', '.join(drifted)}")
+        except FileNotFoundError:
+            print("\n  ⚠ Referans istatistikler bulunamadı (drift analizi atlandı)")
+    else:
+        print("\n  ℹ Drift analizi için yeterli tahmin logu yok")
+
+    # Performans kontrolü
+    import os
+    if os.path.exists("artifacts/metrics.json"):
+        from src.utils.common import load_json
+        data = load_json("artifacts/metrics.json")
+        monitor = ModelMonitor()
+        perf = monitor.check_performance(data.get("metrics", {}))
+        print(f"\n  Performans     : {perf.get('status', 'unknown')}")
+        for m, comp in perf.get('comparisons', {}).items():
+            icon = '✅' if not comp['degraded'] else '⚠'
+            print(f"    {icon} {m}: {comp['baseline']:.4f} → {comp['current']:.4f} ({comp['drop_pct']:+.1f}%)")
+    print("=" * 60)
+
+
+def cmd_retrain(args) -> None:
+    """
+    Manuel retrain tetikler.
+    """
+    from src.pipeline.retrain_pipeline import RetrainPipeline
+
+    logging.info("CLI → Retrain pipeline başlatılıyor...")
+    pipeline = RetrainPipeline()
+    force = hasattr(args, 'force') and args.force
+    result = pipeline.run(reason="manual", force=force)
+
+    print("\n" + "=" * 60)
+    if result["retrained"]:
+        print("🎯 YENİDEN EĞİTİM TAMAMLANDI")
+        train_r = result.get("result", {})
+        print(f"  Model  : {train_r.get('best_model', 'N/A')}")
+        print(f"  F1     : {train_r.get('best_f1', 0):.4f}")
+    else:
+        print("⚠ Retrain YAPILMADI")
+        print(f"  Neden  : {result.get('message', 'Bilinmiyor')}")
+    print("=" * 60)
+
+
 def cmd_serve(args) -> None:
     """
     FastAPI sunucusunu başlatır.
@@ -238,6 +315,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="FastAPI REST API sunucusunu başlatır",
     )
     parser.add_argument(
+        "--monitor",
+        action="store_true",
+        help="Monitoring raporu üretir (drift + performans kontrolü)",
+    )
+    parser.add_argument(
+        "--retrain",
+        action="store_true",
+        help="Modeli yeniden eğitir",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Retrain için cooldown ve diğer kontrolleri atla",
+    )
+    parser.add_argument(
         "--host",
         type=str,
         default="127.0.0.1",
@@ -248,6 +340,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=8000,
         help="API sunucu port numarası (varsayılan: 8000)",
+    )
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=7,
+        help="Monitoring için kaç gün geriye bakılacak (varsayılan: 7)",
     )
 
     return parser
@@ -266,7 +364,8 @@ def main() -> None:
     args = parser.parse_args()
 
     # Hiçbir komut verilmemişse yardım göster
-    if not any([args.train, args.predict, args.predict_inline, args.info, args.serve]):
+    if not any([args.train, args.predict, args.predict_inline, args.info,
+                args.serve, args.monitor, args.retrain]):
         parser.print_help()
         sys.exit(0)
 
@@ -279,6 +378,12 @@ def main() -> None:
 
     if args.info:
         cmd_info(args)
+
+    if args.monitor:
+        cmd_monitor(args)
+
+    if args.retrain:
+        cmd_retrain(args)
 
     if args.serve:
         cmd_serve(args)

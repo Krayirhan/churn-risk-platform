@@ -155,3 +155,13 @@ def tmp_artifacts_dir(tmp_path) -> str:
     artifacts = tmp_path / "artifacts"
     artifacts.mkdir()
     return str(artifacts)
+
+
+@pytest.fixture(scope="session")
+def monitoring_dict(project_root) -> dict:
+    """
+    configs/monitoring.yaml içeriğini dict olarak döndürür.
+    """
+    from src.utils.common import load_yaml
+    return load_yaml(os.path.join(project_root, "configs", "monitoring.yaml"))
+
