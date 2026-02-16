@@ -46,7 +46,7 @@ def cmd_train(args) -> None:
     print(f"  En iyi model : {result['best_model']}")
     print(f"  Best F1      : {result['best_f1']:.4f}")
     print(f"  Toplam süre  : {result['total_time']}s")
-    print(f"  Adım süreleri:")
+    print("  Adım süreleri:")
     for step, t in result["timings"].items():
         if step != "total":
             print(f"    {step:20s} : {t}s")
@@ -151,7 +151,7 @@ def cmd_info(args) -> None:
 
     cm = metrics.get("confusion_matrix", {})
     if cm:
-        print(f"\n  Confusion Matrix:")
+        print("\n  Confusion Matrix:")
         print(f"    TN={cm.get('true_negative', '?')}  FP={cm.get('false_positive', '?')}")
         print(f"    FN={cm.get('false_negative', '?')}  TP={cm.get('true_positive', '?')}")
     print("=" * 60)

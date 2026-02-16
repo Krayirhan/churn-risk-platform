@@ -316,7 +316,7 @@ def evaluate_models(
                 best_model = model
                 best_params = {}
                 cv_best_score = None
-                logging.info(f"│  Parametre grid'i yok, varsayılan ile eğitildi")
+                logging.info("│  Parametre grid'i yok, varsayılan ile eğitildi")
 
             # Test seti üzerinde tahmin yap
             y_pred = best_model.predict(X_test)

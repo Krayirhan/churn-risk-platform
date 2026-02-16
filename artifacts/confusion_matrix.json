@@ -1,25 +1,25 @@
 {
-  "true_negative": 26,
+  "true_negative": 28,
   "false_positive": 4,
-  "false_negative": 8,
-  "true_positive": 2,
-  "tn_rate": 0.65,
+  "false_negative": 7,
+  "true_positive": 1,
+  "tn_rate": 0.7,
   "fp_rate": 0.1,
-  "fn_rate": 0.2,
-  "tp_rate": 0.05,
+  "fn_rate": 0.175,
+  "tp_rate": 0.025,
   "matrix": [
     [
-      26,
+      28,
       4
     ],
     [
-      8,
-      2
+      7,
+      1
     ]
   ],
   "total_samples": 40,
-  "total_actual_churn": 10,
-  "total_actual_no_churn": 30,
-  "total_predicted_churn": 6,
-  "total_predicted_no_churn": 34
+  "total_actual_churn": 8,
+  "total_actual_no_churn": 32,
+  "total_predicted_churn": 5,
+  "total_predicted_no_churn": 35
 }

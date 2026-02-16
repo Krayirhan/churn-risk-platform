@@ -170,7 +170,6 @@ class RetrainPipeline:
             from src.components.data_ingestion import DataIngestion
             from src.components.drift_detector import DriftDetector
             import pandas as pd
-            import numpy as np
 
             logging.info("  📊 Referans istatistikler güncelleniyor...")
 

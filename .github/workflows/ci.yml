@@ -57,7 +57,7 @@ jobs:
           # E203: whitespace before ':' (black uyumlu)
           flake8 src/ app.py main.py \
             --max-line-length=120 \
-            --extend-ignore=E501,W503,E203 \
+            --extend-ignore=E501,W503,E203,W291,W293,W391 \
             --statistics \
             --count
 

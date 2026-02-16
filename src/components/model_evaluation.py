@@ -21,7 +21,6 @@
 #   train_pipeline.py → ModelEvaluation().initiate(model, X_test, y_test)
 # ============================================================================
 
-import os
 import sys
 import numpy as np
 from dataclasses import dataclass
@@ -206,7 +205,7 @@ class ModelEvaluation:
             "total_actual_churn": int(tp + fn),       # Gerçekte churn eden
             "total_actual_no_churn": int(tn + fp),    # Gerçekte kalan
             "total_predicted_churn": int(tp + fp),    # "Churn" dediğimiz
-            "total_predicted_no_churn": int(tn + fn), # "No Churn" dediğimiz
+            "total_predicted_no_churn": int(tn + fn),  # "No Churn" dediğimiz
         }
 
         return cm_dict
@@ -325,7 +324,7 @@ class ModelEvaluation:
         print(f"📊 MODEL DEĞERLENDİRME RAPORU — {model_name}")
         print("=" * 60)
 
-        print(f"\n  📈 Performans Metrikleri:")
+        print("\n  📈 Performans Metrikleri:")
         print(f"     Accuracy    : {metrics['accuracy']:.4f}")
         print(f"     F1-Score    : {metrics['f1']:.4f}")
         print(f"     Recall      : {metrics['recall']:.4f}")
@@ -335,12 +334,12 @@ class ModelEvaluation:
         if "pr_auc" in metrics:
             print(f"     PR-AUC      : {metrics['pr_auc']:.4f}")
 
-        print(f"\n  📋 Confusion Matrix:")
+        print("\n  📋 Confusion Matrix:")
         print(f"     {'':>20} Tahmin: No   Tahmin: Yes")
         print(f"     {'Gerçek: No':>20}    {cm['true_negative']:>5}        {cm['false_positive']:>5}")
         print(f"     {'Gerçek: Yes':>20}    {cm['false_negative']:>5}        {cm['true_positive']:>5}")
 
-        print(f"\n  💡 İş Yorumu:")
+        print("\n  💡 İş Yorumu:")
         print(f"     Toplam test verisi       : {cm['total_samples']}")
         print(f"     Gerçek churn sayısı      : {cm['total_actual_churn']}")
         print(f"     Doğru yakalanan churn    : {cm['true_positive']} "

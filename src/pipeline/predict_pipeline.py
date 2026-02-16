@@ -24,10 +24,8 @@
 
 import os
 import sys
-import numpy as np
 import pandas as pd
-from dataclasses import dataclass, field, asdict
-from typing import Optional
+from dataclasses import dataclass, asdict
 
 from src.exception import CustomException
 from src.logger import logging

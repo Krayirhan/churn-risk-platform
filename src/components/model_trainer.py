@@ -22,7 +22,6 @@
 #   train_pipeline.py → ModelTrainer().initiate(X_train, X_test, y_train, y_test)
 # ============================================================================
 
-import os
 import sys
 import numpy as np
 from dataclasses import dataclass
@@ -243,7 +242,7 @@ class ModelTrainer:
             logging.info("┌" + "─" * 50 + "┐")
             logging.info(f"│  🏆 EN İYİ MODEL: {best_model_name}")
             logging.info(f"│  F1: {best_f1:.4f} | Recall: {best_metrics['test_recall']:.4f} | "
-                        f"Precision: {best_metrics['test_precision']:.4f}")
+                         f"Precision: {best_metrics['test_precision']:.4f}")
             logging.info(f"│  AUC: {best_metrics.get('test_roc_auc', 'N/A')}")
             logging.info(f"│  Best params: {best_metrics['best_params']}")
             logging.info("└" + "─" * 50 + "┘")

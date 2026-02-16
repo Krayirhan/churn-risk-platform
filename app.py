@@ -284,7 +284,6 @@ async def health_check():
     Model ve preprocessor dosyalarının varlığını kontrol eder.
     Kubernetes veya load balancer'lar bu endpoint'i kullanır.
     """
-    cfg_path = "configs/config.yaml"
     model_exists = os.path.exists("artifacts/model.pkl")
     pp_exists = os.path.exists("artifacts/preprocessor.pkl")
 
