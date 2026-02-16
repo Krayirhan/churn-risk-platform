@@ -21,13 +21,30 @@ requires-python = ">=3.10"
 authors = [
     {name = "DS Team", email = "dev@churn-risk-platform.com"}
 ]
-keywords = ["churn", "machine-learning", "fastapi", "mlops"]
+maintainers = [
+    {name = "Krayirhan", email = "dev@churn-risk-platform.com"}
+]
+keywords = ["churn", "machine-learning", "fastapi", "mlops", "telco", "customer-churn", "prediction"]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Framework :: FastAPI",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Krayirhan/churn-risk-platform"
+Documentation = "https://github.com/Krayirhan/churn-risk-platform#readme"
+Repository = "https://github.com/Krayirhan/churn-risk-platform.git"
+Issues = "https://github.com/Krayirhan/churn-risk-platform/issues"
+Changelog = "https://github.com/Krayirhan/churn-risk-platform/blob/main/CHANGELOG.md"
 
 dependencies = [
     "pandas",
