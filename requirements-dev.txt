@@ -1,0 +1,22 @@
+# ============================================================================
+# requirements-dev.txt — Geliştirme Ortamı Bağımlılıkları
+# ============================================================================
+# Production bağımlılıklarını dahil et
+-r requirements.txt
+
+# ─── Test ───
+pytest>=7.0
+pytest-cov>=4.0
+httpx                     # FastAPI TestClient async desteği
+
+# ─── Lint & Format ───
+flake8>=6.0
+black>=23.0
+isort>=5.0
+
+# ─── Pre-commit hooks ───
+pre-commit>=3.0
+
+# ─── Notebook ───
+nbformat
+ipykernel

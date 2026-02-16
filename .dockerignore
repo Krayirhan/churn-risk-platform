@@ -1,0 +1,72 @@
+# ============================================================================
+# .dockerignore — Docker build context'ine GİRMEMESİ gereken dosyalar
+# ============================================================================
+# NEDEN ÖNEMLİ?
+#   Docker build context (COPY .) gönderilirken gereksiz dosyalar hariç tutulur.
+#   → Daha hızlı build, daha küçük imaj, güvenlik.
+# ============================================================================
+
+# ─── Git ───
+.git
+.gitignore
+
+# ─── Python ───
+__pycache__
+*.py[cod]
+*.egg-info
+dist
+build
+
+# ─── Virtual Environment ───
+.venv
+venv
+ENV
+
+# ─── IDE ───
+.vscode
+.idea
+
+# ─── Jupyter ───
+.ipynb_checkpoints
+notebooks/
+
+# ─── Test & QA ───
+tests/
+.pytest_cache
+htmlcov
+.coverage
+coverage.xml
+
+# ─── Logs ───
+logs/
+*.log
+
+# ─── Data (büyük dosyalar) ───
+data/
+*.csv
+
+# ─── Model artifacts (volume ile mount edilmeli) ───
+artifacts/*.pkl
+artifacts/*.npz
+models/
+
+# ─── Docker (kendini dahil etme) ───
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# ─── Docs ───
+docs/
+*.md
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+
+# ─── Env ───
+.env
+.env.*
+
+# ─── CI/CD ───
+.github/
+Makefile

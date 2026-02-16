@@ -1,0 +1,67 @@
+# ============================================================================
+# docker-compose.yml — Yerel Geliştirme ve Production Orkestrasyon
+# ============================================================================
+# NEDEN BU DOSYA?
+#   Tek komutla tüm servisleri ayağa kaldırır:
+#     docker-compose up --build          → API servisi
+#     docker-compose --profile train up   → Eğitim çalıştır
+#     docker-compose down                 → Temizle
+#
+# VOLUME MOUNT'LAR:
+#   - artifacts/  → Model ve preprocessor dosyaları (kalıcı)
+#   - data/raw/   → Eğitim verisi (host'tan mount)
+#   - logs/       → Log dosyaları (kalıcı)
+# ============================================================================
+
+services:
+
+  # ────────────────────────────────────────────────────────────
+  # API Servisi — FastAPI + Uvicorn
+  # ────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: churn-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./artifacts:/app/artifacts        # Model dosyaları (kalıcı)
+      - ./data/raw:/app/data/raw:ro       # Eğitim verisi (read-only)
+      - ./logs:/app/logs                  # Log çıktıları
+    environment:
+      - PYTHONUNBUFFERED=1                # Log'lar anında stdout'a yazsın
+      - UVICORN_WORKERS=2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - churn-net
+
+  # ────────────────────────────────────────────────────────────
+  # Eğitim Servisi — Tek seferlik model eğitimi
+  # ────────────────────────────────────────────────────────────
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: churn-train
+    command: ["python", "main.py", "--train"]
+    volumes:
+      - ./artifacts:/app/artifacts        # Üretilen model burada kalır
+      - ./data/raw:/app/data/raw:ro       # Eğitim verisi
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    profiles:
+      - train                             # Sadece --profile train ile çalışır
+    networks:
+      - churn-net
+
+networks:
+  churn-net:
+    driver: bridge

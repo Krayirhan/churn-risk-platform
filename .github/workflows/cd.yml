@@ -1,0 +1,164 @@
+# ============================================================================
+# cd.yml — Continuous Deployment Pipeline (GitHub Actions)
+# ============================================================================
+# NEDEN BU WORKFLOW?
+#   Semantic tag (v*) push edildiğinde veya release oluşturulduğunda:
+#     1. CI testlerinin geçtiğini doğrular
+#     2. Docker image build eder
+#     3. GitHub Container Registry (ghcr.io)'ya push eder
+#     4. Release notes ile GitHub Release oluşturur
+#
+# TETİKLENME:
+#   - tag push  → v1.0.0, v0.2.1-beta gibi semver tag'leri
+#   - release   → GitHub UI'dan release oluşturulduğunda
+#
+# KULLANIM:
+#   git tag v0.1.0
+#   git push origin v0.1.0
+# ============================================================================
+
+name: CD — Build, Push & Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"               # Semver tag'leri: v1.0.0, v0.2.1-beta
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 1: CI Kontrolü — Testler geçmeli
+  # ──────────────────────────────────────────────────────────
+  ci-gate:
+    name: 🔒 CI Gate (test + lint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python kurulumu
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Bağımlılık kurulumu
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov httpx flake8
+
+      - name: Lint kontrolü
+        run: |
+          flake8 src/ app.py main.py \
+            --max-line-length=120 \
+            --extend-ignore=E501,W503,E203 \
+            --count --quiet
+
+      - name: Test çalıştır
+        run: |
+          pytest tests/ -v --tb=short
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 2: Docker Build & Push → ghcr.io
+  # ──────────────────────────────────────────────────────────
+  docker-publish:
+    name: 🐳 Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: ci-gate
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker Buildx kurulumu
+        uses: docker/setup-buildx-action@v3
+
+      - name: GHCR Login
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata (tag'ler)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Image digest
+        run: echo "📦 Pushed with digest ${{ steps.meta.outputs.digest || 'N/A' }}"
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 3: GitHub Release oluştur
+  # ──────────────────────────────────────────────────────────
+  release:
+    name: 📦 GitHub Release
+    runs-on: ubuntu-latest
+    needs: docker-publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # Tüm geçmiş (changelog için)
+
+      - name: Changelog oluştur
+        id: changelog
+        run: |
+          # Son iki tag arasındaki commit'leri listele
+          PREV_TAG=$(git tag --sort=-v:refname | head -2 | tail -1)
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+
+          if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$CURRENT_TAG" ]; then
+            CHANGES=$(git log --oneline --pretty=format:"- %s (%h)" HEAD)
+          else
+            CHANGES=$(git log --oneline --pretty=format:"- %s (%h)" ${PREV_TAG}..${CURRENT_TAG})
+          fi
+
+          echo "## 🚀 What's Changed" > changelog.md
+          echo "" >> changelog.md
+          echo "$CHANGES" >> changelog.md
+          echo "" >> changelog.md
+          echo "---" >> changelog.md
+          echo "**Docker Image:** \`ghcr.io/${{ github.repository }}:${CURRENT_TAG#v}\`" >> changelog.md
+          echo "" >> changelog.md
+          echo '```bash' >> changelog.md
+          echo "docker pull ghcr.io/${{ github.repository }}:${CURRENT_TAG#v}" >> changelog.md
+          echo '```' >> changelog.md
+
+      - name: GitHub Release oluştur
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: changelog.md
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,135 @@
+# ============================================================================
+# pyproject.toml — Modern Python Proje Konfigürasyonu
+# ============================================================================
+# NEDEN BU DOSYA?
+#   setup.py'ın modern alternatifi. Tüm araç konfigürasyonları
+#   (pytest, coverage, flake8-alternatifi, black, isort) tek dosyada.
+#   PEP 621 standardına uygun.
+# ============================================================================
+
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "churn-risk-platform"
+version = "0.1.0"
+description = "Telco Customer Churn Risk Platform — End-to-end ML Pipeline"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "DS Team", email = "dev@churn-risk-platform.com"}
+]
+keywords = ["churn", "machine-learning", "fastapi", "mlops"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Framework :: FastAPI",
+]
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "xgboost",
+    "pyyaml",
+    "scipy",
+    "statsmodels",
+    "seaborn",
+    "matplotlib",
+    "plotly",
+    "fastapi",
+    "uvicorn[standard]",
+    "joblib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "httpx",
+    "flake8>=6.0",
+    "black>=23.0",
+    "isort>=5.0",
+    "pre-commit>=3.0",
+]
+notebook = [
+    "nbformat",
+    "jupyter",
+    "ipykernel",
+]
+
+[project.scripts]
+churn-train = "main:cmd_train"
+churn-serve = "main:cmd_serve"
+
+# ──────────────────────────────────────────────────────────────
+# pytest konfigürasyonu
+# ──────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "-ra",                         # Özet: failed + error + skipped
+]
+markers = [
+    "slow: Yavaş testler (model eğitimi vb.)",
+    "integration: Entegrasyon testleri",
+    "api: API endpoint testleri",
+]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+
+# ──────────────────────────────────────────────────────────────
+# coverage konfigürasyonu
+# ──────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["src", "app"]
+omit = [
+    "tests/*",
+    "notebooks/*",
+    "setup.py",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 60                     # Minimum %60 coverage gerekli
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__",
+    "raise NotImplementedError",
+    "pass",
+]
+
+# ──────────────────────────────────────────────────────────────
+# black (code formatter) konfigürasyonu
+# ──────────────────────────────────────────────────────────────
+[tool.black]
+line-length = 120
+target-version = ["py310"]
+
+# ──────────────────────────────────────────────────────────────
+# isort (import sıralayıcı) konfigürasyonu
+# ──────────────────────────────────────────────────────────────
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["src"]
+
+# ──────────────────────────────────────────────────────────────
+# setuptools — paket keşfi
+# ──────────────────────────────────────────────────────────────
+[tool.setuptools.packages.find]
+include = ["src*"]
+exclude = ["tests*", "notebooks*", "docs*"]

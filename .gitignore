@@ -56,8 +56,14 @@ data/external/
 Thumbs.db
 desktop.ini
 
-# ─── pytest ───
+# ─── pytest & coverage ───
 .pytest_cache/
 htmlcov/
 .coverage
 coverage.xml
+test-results.xml
+
+# ─── Build ───
+dist/
+build/
+*.egg-info/
