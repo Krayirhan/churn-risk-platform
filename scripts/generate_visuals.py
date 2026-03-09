@@ -311,7 +311,7 @@ def plot_architecture():
         (9.0, 5.5, 2.2, 1.2, "Model\nEvaluation", "Metrics\nCurves", COLORS["warning"]),
         (0.3, 2.5, 2.2, 1.2, "Drift\nDetection", "KS Test\nPSI", "#8B5CF6"),
         (3.2, 2.5, 2.2, 1.2, "Prediction\nLogger", "JSONL Logs\nStatistics", "#EC4899"),
-        (6.1, 2.5, 2.2, 1.2, "FastAPI\nService", "REST API\n11 Endpoints", COLORS["danger"]),
+        (6.1, 2.5, 2.2, 1.2, "FastAPI\nService", "REST API\n10 Endpoints", COLORS["danger"]),
         (9.0, 2.5, 2.2, 1.2, "Retrain\nPipeline", "Auto / Manual\nScheduled", "#14B8A6"),
     ]
 

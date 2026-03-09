@@ -26,9 +26,9 @@ The Telco Customer Churn Risk Platform is built on a modular, production-ready a
     │   (FastAPI)      │                                │   (FastAPI)      │
     │                  │                                │                  │
     │ • /predict       │                                │ • /drift         │
-    │ • /predict/batch │                                │ • /predictions   │
+    │ • /predict/batch │                                │ • /stats   │
     │ • /health        │                                │ • /retrain       │
-    │ • /model-info    │                                │ • /status        │
+    │ • /model-info    │                                │ • /health-report        │
     └────────┬─────────┘                                └────────┬─────────┘
              │                                                   │
     ┌────────▼─────────────────────────────────────────────────▼─────────┐
@@ -106,11 +106,11 @@ Core Prediction:
 └── POST /predict/batch   → Batch predictions
 
 Monitoring:
-├── GET  /monitoring/drift         → Drift analysis
-├── GET  /monitoring/predictions   → Prediction logs
-├── GET  /monitoring/status        → System status
-├── POST /monitoring/retrain       → Trigger retraining
-└── GET  /monitoring/retrain/history → Retrain history
+├── GET  /monitor/drift         → Drift analysis
+├── GET  /monitor/stats   → Prediction statistics
+├── GET  /monitor/health-report        → Monitoring status
+├── POST /monitor/retrain       → Trigger retraining
+└── GET  /monitor/retrain-history → Retrain history
 ```
 
 ---
@@ -144,7 +144,7 @@ Load Model + Preprocessor → Transform Input → Predict → Format Response
 **Features**:
 - Lazy loading (models cached in memory)
 - Batch prediction support
-- Confidence scoring
+- Risk-level mapping (Low / Medium / High)
 - Prediction logging integration
 
 #### Retrain Pipeline (`src/pipeline/retrain_pipeline.py`)
@@ -294,18 +294,19 @@ models = {
 **Log Format**:
 ```json
 {
-  "prediction_id": "pred_20260216_103045_a7f3c2",
   "timestamp": "2026-02-16T10:30:45Z",
-  "prediction": "Yes",
+  "customerID": "CUST_001",
+  "prediction": 1,
   "churn_probability": 0.73,
-  "risk_level": "HIGH",
-  "model_version": "0.1.0",
-  "input_hash": "7f3a9b...",
-  "inference_time_ms": 12.5
+  "risk_level": "Yüksek",
+  "model_version": "v1",
+  "input_features": { "tenure": 12, "MonthlyCharges": 70.35, "..." : "..." }
 }
 ```
 
-**Storage**: JSON files in `logs/predictions/`
+> **Note**: `prediction` is an integer (0 or 1). `risk_level` uses Turkish labels (`"Düşük"`, `"Orta"`, `"Yüksek"`). Full customer input features are stored for drift analysis.
+
+**Storage**: JSON Lines files in `logs/predictions/`
 
 #### Model Monitor (`src/components/model_monitor.py`)
 

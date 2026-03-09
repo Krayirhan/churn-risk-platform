@@ -32,7 +32,7 @@ This platform provides an **automated, production-ready system** that:
 | **ML Pipeline** | Automated ingestion → transformation → training → evaluation |
 | **4 Algorithms** | Logistic Regression, Random Forest, XGBoost, Gradient Boosting with GridSearchCV |
 | **Feature Engineering** | 10 custom features (LoyaltyIndex, RiskScope, ChargeGap, etc.) |
-| **REST API** | FastAPI with 11 endpoints, Swagger docs, batch prediction |
+| **REST API** | FastAPI with 10 endpoints, Swagger docs, batch prediction |
 | **Monitoring** | Kolmogorov-Smirnov & PSI drift detection, prediction logging |
 | **Auto-Retrain** | Triggered by drift, performance degradation, or schedule |
 | **CI/CD** | GitHub Actions — lint, test, Docker build, GHCR push |
@@ -60,7 +60,7 @@ Data Ingestion ──► Data Transformation ──► Model Training ──► 
     ▼
 Model Registry (artifacts/)
     │
-    ├──► FastAPI Inference Service (11 endpoints)
+    ├──► FastAPI Inference Service (10 endpoints)
     │         │
     │         ├── /predict        → single prediction
     │         ├── /predict/batch  → batch prediction (up to 100)
@@ -226,7 +226,7 @@ curl -X POST http://localhost:8000/predict \
 {
   "prediction": 1,
   "churn_probability": 0.82,
-  "risk_level": "High",
+  "risk_level": "Yüksek",
   "customerID": "API_USER"
 }
 ```
@@ -267,7 +267,7 @@ curl -X POST http://localhost:8000/predict/batch \
 ```
 churn-risk-platform/
 │
-├── app.py                          # FastAPI REST API (11 endpoints)
+├── app.py                          # FastAPI REST API (10 endpoints)
 ├── main.py                         # CLI entry point (train/predict/serve)
 ├── Dockerfile                      # Multi-stage container build
 ├── docker-compose.yml              # 3-service orchestration
@@ -394,8 +394,8 @@ NewModel:
 ## Monitoring & Retraining
 
 ```bash
-# Check for data drift
-python main.py --check-drift
+# Check drift/performance monitoring
+python main.py --monitor
 
 # View prediction statistics
 curl http://localhost:8000/monitor/stats?days=7
@@ -431,7 +431,7 @@ curl -X POST http://localhost:8000/monitor/retrain?force=true
 ## Roadmap
 
 - [x] Churn prediction model (4 algorithms, GridSearchCV)
-- [x] FastAPI inference service (11 endpoints)
+- [x] FastAPI inference service (10 endpoints)
 - [x] Data drift monitoring (KS + PSI)
 - [x] Automated retraining pipeline
 - [x] CI/CD with GitHub Actions
@@ -478,3 +478,4 @@ pytest tests/ -v
 flake8 src/ app.py main.py --max-line-length=120
 black src/ tests/ app.py main.py
 ```
+

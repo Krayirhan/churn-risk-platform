@@ -26,14 +26,59 @@
 # ============================================================================
 
 import os
+import time
 from typing import Optional
 from contextlib import asynccontextmanager
+from collections import defaultdict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Security, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
+from starlette.responses import JSONResponse
 
 from src.logger import logging
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API KEY AUTH — İsteğe Bağlı Kimlik Doğrulama
+# ─────────────────────────────────────────────────────────────────────────────
+# API_KEY env var'ı set edilmişse korumalı endpoint'ler anahtar gerektirir.
+# Set edilmemişse tüm endpoint'ler açıktır (geliştirme modu).
+
+API_KEY = os.getenv("API_KEY")
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(api_key: Optional[str] = Security(_api_key_header)):
+    """API_KEY env var'ı tanımlıysa, gelen X-API-Key header'ını doğrular."""
+    if API_KEY is None:
+        return  # Auth disabled — geliştirme modu
+    if api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Geçersiz veya eksik API anahtarı")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RATE LIMITING — İstek Hız Sınırlaması (in-memory, basit)
+# ─────────────────────────────────────────────────────────────────────────────
+# Üretim ortamı için Redis tabanlı rate limiter önerilir.
+
+RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))   # saniye
+RATE_LIMIT_MAX = int(os.getenv("RATE_LIMIT_MAX", "100"))        # pencere başına istek
+
+_rate_store: dict[str, list[float]] = defaultdict(list)
+
+
+def _check_rate_limit(client_ip: str) -> bool:
+    """Basit sliding-window rate limiter. True = izin ver."""
+    now = time.time()
+    window_start = now - RATE_LIMIT_WINDOW
+    # Eski kayıtları temizle
+    _rate_store[client_ip] = [t for t in _rate_store[client_ip] if t > window_start]
+    if len(_rate_store[client_ip]) >= RATE_LIMIT_MAX:
+        return False
+    _rate_store[client_ip].append(now)
+    return True
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -251,13 +296,34 @@ app = FastAPI(
 #   - Frontend (React, Vue vb.) farklı port'tan API'ye istek atar.
 #   - CORS olmadan tarayıcı bu istekleri engeller.
 #   - allow_origins=["*"] → tüm origin'lere izin (prod'da kısıtlanmalı!).
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")
+    if origin.strip()
+]
+wildcard_cors = cors_origins == ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # Production'da spesifik domain'ler yazılmalı
-    allow_credentials=True,
+    allow_origins=cors_origins or ["*"],
+    allow_credentials=not wildcard_cors,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ─── Rate Limit Middleware ───
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """IP tabanlı basit rate limiter. RATE_LIMIT_MAX / RATE_LIMIT_WINDOW saniye."""
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": f"Çok fazla istek. {RATE_LIMIT_WINDOW}s içinde en fazla {RATE_LIMIT_MAX} istek."},
+        )
+    response = await call_next(request)
+    return response
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -325,7 +391,7 @@ async def model_info():
     )
 
 
-@app.post("/predict", response_model=PredictionOutput, tags=["Tahmin"])
+@app.post("/predict", response_model=PredictionOutput, tags=["Tahmin"], dependencies=[Depends(verify_api_key)])
 async def predict_single(customer: CustomerInput):
     """
     Tekil müşteri için churn tahmini yapar.
@@ -367,7 +433,7 @@ async def predict_single(customer: CustomerInput):
         raise HTTPException(status_code=500, detail=f"Tahmin hatası: {str(e)}")
 
 
-@app.post("/predict/batch", response_model=BatchOutput, tags=["Tahmin"])
+@app.post("/predict/batch", response_model=BatchOutput, tags=["Tahmin"], dependencies=[Depends(verify_api_key)])
 async def predict_batch(batch: BatchInput):
     """
     Birden fazla müşteri için toplu churn tahmini yapar.
@@ -428,7 +494,7 @@ async def predict_batch(batch: BatchInput):
 # MONİTORİNG ENDPOINT'LERİ
 # ─────────────────────────────────────────────────────────────────────────────
 
-@app.get("/monitor/stats", tags=["Monitoring"])
+@app.get("/monitor/stats", tags=["Monitoring"], dependencies=[Depends(verify_api_key)])
 async def monitor_stats(days: int = 7):
     """
     Son N günün tahmin istatistiklerini döndürür.
@@ -443,7 +509,7 @@ async def monitor_stats(days: int = 7):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/monitor/drift", tags=["Monitoring"])
+@app.get("/monitor/drift", tags=["Monitoring"], dependencies=[Depends(verify_api_key)])
 async def monitor_drift():
     """
     Production tahminlerinde data drift olup olmadığını kontrol eder.
@@ -477,31 +543,71 @@ async def monitor_drift():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/monitor/health-report", tags=["Monitoring"])
+@app.get("/monitor/health-report", tags=["Monitoring"], dependencies=[Depends(verify_api_key)])
 async def monitor_health_report():
     """
     Tam monitoring raporu: performans + drift durumunu birleştirir.
     """
     try:
         from src.components.model_monitor import ModelMonitor
+        from src.components.prediction_logger import PredictionLogger
+        from src.components.drift_detector import DriftDetector
         from src.utils.common import load_json
 
         monitor = ModelMonitor()
 
-        # Baseline metrikleri güncel metrik olarak kullan (ground truth yoksa)
+        # ⚠ Ground truth yoksa baseline metrikler "current" olarak kullanılır.
+        # Bu durumda performans karşılaştırması her zaman "stable" döner çünkü
+        # baseline ile current aynı dosyadır (artifacts/metrics.json).
+        # Gerçek performans izleme için POST /feedback endpoint'i ile etiket
+        # (ground truth) toplanmalı ve current_metrics gerçek veriden hesaplanmalıdır.
         current_metrics = None
+        has_ground_truth = False
         if os.path.exists("artifacts/metrics.json"):
             data = load_json("artifacts/metrics.json")
             current_metrics = data.get("metrics", {})
 
-        report = monitor.full_check(current_metrics=current_metrics)
+        # Drift raporunu da dahil et (mümkünse)
+        drift_report = None
+        try:
+            pred_logger = PredictionLogger()
+            features_df = pred_logger.get_features_df(n=500, days=7)
+            if not features_df.empty:
+                detector = DriftDetector()
+                drift_report = detector.analyze(features_df)
+            else:
+                drift_report = {
+                    "drift_detected": False,
+                    "message": "Drift analizi için yeterli tahmin logu yok",
+                }
+        except FileNotFoundError as drift_err:
+            drift_report = {
+                "drift_detected": False,
+                "message": f"Referans istatistikler bulunamadı: {drift_err}",
+            }
+        except Exception as drift_err:
+            drift_report = {
+                "drift_detected": False,
+                "message": f"Drift analizi başarısız: {drift_err}",
+            }
+
+        report = monitor.full_check(
+            current_metrics=current_metrics,
+            drift_report=drift_report,
+        )
+        report["ground_truth_available"] = has_ground_truth
+        if not has_ground_truth:
+            report["performance_note"] = (
+                "Ground truth etiketi mevcut değil. Performans metrikleri "
+                "eğitim baseline'ından alındı — gerçek prod performansını yansıtmaz."
+            )
         return report
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/monitor/retrain", tags=["Monitoring"])
+@app.post("/monitor/retrain", tags=["Monitoring"], dependencies=[Depends(verify_api_key)])
 async def trigger_retrain(force: bool = False):
     """
     Manuel retrain tetikler.
@@ -520,7 +626,7 @@ async def trigger_retrain(force: bool = False):
         raise HTTPException(status_code=500, detail=f"Retrain hatası: {str(e)}")
 
 
-@app.get("/monitor/retrain-history", tags=["Monitoring"])
+@app.get("/monitor/retrain-history", tags=["Monitoring"], dependencies=[Depends(verify_api_key)])
 async def retrain_history():
     """
     Retrain geçmişini döndürür.

@@ -80,8 +80,8 @@ notebook = [
 ]
 
 [project.scripts]
-churn-train = "main:cmd_train"
-churn-serve = "main:cmd_serve"
+churn-train = "main:script_train"
+churn-serve = "main:script_serve"
 
 # ──────────────────────────────────────────────────────────────
 # pytest konfigürasyonu

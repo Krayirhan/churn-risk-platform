@@ -47,8 +47,7 @@ install: ## 📦 Production bağımlılıklarını kur
 
 install-dev: ## 📦 Dev bağımlılıklarını kur (test, lint, format)
 	pip install --upgrade pip
-	pip install -r requirements.txt
-	pip install pytest pytest-cov httpx flake8 black isort pre-commit
+	pip install -r requirements-dev.txt
 	pre-commit install
 
 # ──────────────────────────────────────────────────────────────
@@ -75,7 +74,7 @@ test-integration: ## 🧪 Sadece integration testleri çalıştır
 lint: ## 🧹 flake8 ile lint kontrolü
 	flake8 src/ app.py main.py \
 		--max-line-length=120 \
-		--extend-ignore=E501,W503,E203 \
+		--extend-ignore=E501,W503,E203,W291,W293,W391 \
 		--statistics --count
 
 format: ## 🎨 black + isort ile otomatik formatlama
@@ -111,10 +110,10 @@ docker-down: ## 🐳 Docker Compose servislerini durdur
 	docker-compose down
 
 docker-train: ## 🐳 Docker içinde model eğitimi
-	docker-compose --profile train up --build
+	docker-compose run --rm python-backend python main.py --train
 
 docker-logs: ## 🐳 Container loglarını göster
-	docker-compose logs -f api
+	docker-compose logs -f python-backend
 
 # ──────────────────────────────────────────────────────────────
 # CLEAN — Temizlik

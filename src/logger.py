@@ -1,13 +1,13 @@
 # Özel Loglama mekanizması
 import logging
 import os
-from datetime import datetime
 
-# Log dosyasının adı: "08_25_2023_14_30_05.log" formatında
-LOG_FILE = f"{datetime.now().strftime('%m_%d_%Y_%H_%M_%S')}.log"
+# Log dosyası: Tek bir dosya kullanılır (her import'ta yeni dosya oluşturmaz)
+# Günlük rotasyon gerekirse logging.handlers.TimedRotatingFileHandler kullanılabilir.
+LOG_FILE = "app.log"
 
-# Logların kaydedileceği ana klasör yolu: (proje_dizini/logs)
-logs_path = os.path.join(os.getcwd(), "logs", LOG_FILE)
+# Logların kaydedileceği klasör yolu: (proje_dizini/logs)
+logs_path = os.path.join(os.getcwd(), "logs")
 
 # Klasörü oluştur (varsa geç)
 os.makedirs(logs_path, exist_ok=True)

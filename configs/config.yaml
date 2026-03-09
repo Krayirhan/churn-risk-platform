@@ -13,8 +13,6 @@ data:
   raw_path: "data/raw/churn.csv"                          # Orijinal telco CSV
   notebook_artifacts_dir: "notebooks/artifacts"            # Notebook çıktı klasörü
   npz_filename: "telco_prepared_dataset.npz"               # Notebook'un export ettiği hazır matris
-  metadata_filename: "export_metadata.json"                # Notebook'un export metadata'sı
-  summary_filename: "notebook_summary.json"                # Notebook özet raporu
 
 # --- MODEL ARTİFACT'LARI ---
 # Eğitim sonucu üretilen dosyaların kaydedileceği yollar
@@ -41,8 +39,3 @@ id_col: "customerID"      # Satır kimliği — modele girmemeli, drop edilecek
 cv:
   n_folds: 5              # 5-Fold Stratified Cross-Validation
   scoring: "f1"           # Churn imbalanced → F1 daha anlamlı (accuracy yanıltıcı)
-
-# --- LOGLAMA ---
-logging:
-  level: "INFO"
-  log_dir: "logs"

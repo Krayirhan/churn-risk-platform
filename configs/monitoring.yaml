@@ -18,16 +18,7 @@ prediction_log:
   enabled: true
   log_dir: "logs/predictions"                     # Tahmin loglarının tutulacağı klasör
   file_prefix: "predictions"                      # predictions_2026-02-16.jsonl
-  rotation: "daily"                               # Günlük yeni dosya
   max_retention_days: 90                           # 90 günden eski loglar silinebilir
-  fields:                                          # Loglanacak alanlar
-    - timestamp
-    - customerID
-    - input_features
-    - prediction
-    - churn_probability
-    - risk_level
-    - model_version
 
 # ─── DATA DRIFT ALGILAMA ───
 # Eğitim verisinin dağılımıyla production verisini karşılaştırır

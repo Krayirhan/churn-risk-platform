@@ -247,10 +247,26 @@ def cmd_serve(args) -> None:
     port = args.port if hasattr(args, "port") and args.port else 8000
 
     print(f"\n🚀 FastAPI sunucusu başlatılıyor → http://{host}:{port}")
-    print("   Docs: http://{host}:{port}/docs")
+    print(f"   Docs: http://{host}:{port}/docs")
     print("   Durdurmak için Ctrl+C\n")
 
     uvicorn.run("app:app", host=host, port=port, reload=False)
+
+
+def script_train() -> None:
+    """
+    pyproject.toml console-script girişi için argümansız train wrapper'ı.
+    """
+    args = argparse.Namespace()
+    cmd_train(args)
+
+
+def script_serve() -> None:
+    """
+    pyproject.toml console-script girişi için varsayılan serve wrapper'ı.
+    """
+    args = argparse.Namespace(host="127.0.0.1", port=8000)
+    cmd_serve(args)
 
 
 def build_parser() -> argparse.ArgumentParser:

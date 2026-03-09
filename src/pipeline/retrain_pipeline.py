@@ -25,6 +25,7 @@
 #   result = pipeline.run(reason="manual", force=True)
 # ============================================================================
 
+import os
 import sys
 import time
 from datetime import datetime
@@ -179,12 +180,23 @@ class RetrainPipeline:
 
             # Mod kontrolü: tuple uzunluğuna göre
             if len(result) == 4:
-                # NPZ modu → numpy array, DataFrame'e dönüştüremeyiz
-                # Referans güncelleme atla
+                # NPZ modu -> numpy array döner; drift için ham feature isimleri yok.
+                # Bu durumda ham CSV varsa oradan referans istatistik üretmeyi dene.
+                raw_path = ingestion.config.raw_data_path
+                if not raw_path or not os.path.exists(raw_path):
+                    logging.info(
+                        "  ℹ NPZ modu ve ham CSV bulunamadı — referans "
+                        "istatistik güncellemesi atlandı"
+                    )
+                    return
+
                 logging.info(
-                    "  ℹ NPZ modu — referans istatistikler "
-                    "sayısal özetle güncellenemedi (atlanıyor)"
+                    "  ℹ NPZ modu tespit edildi — referans istatistikler "
+                    f"ham CSV üzerinden güncellenecek: {raw_path}"
                 )
+                raw_df = pd.read_csv(raw_path)
+                detector = DriftDetector()
+                detector.save_reference_stats(raw_df)
                 return
 
             # CSV modu → DataFrame

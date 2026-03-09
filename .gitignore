@@ -61,15 +61,11 @@ _*.py
 
 # ─── pytest & coverage ───
 .pytest_cache/
+pytest-cache-files-*/
 htmlcov/
 .coverage
 coverage.xml
 test-results.xml
-
-# ─── Build ───
-dist/
-build/
-*.egg-info/
 
 # ─── C# build outputs ───
 backend-csharp/bin/

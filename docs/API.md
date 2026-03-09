@@ -12,10 +12,28 @@ The Churn Risk Platform exposes a RESTful API built with FastAPI. All endpoints 
 
 ## Authentication
 
-Currently, the API is open access (no authentication required). For production deployment, consider adding:
-- API Key authentication
-- JWT token-based auth
-- Rate limiting
+API key authentication is built-in and controlled via the `API_KEY` environment variable:
+
+- **Development mode** (default): When `API_KEY` is not set, all endpoints are open access.
+- **Production mode**: Set `API_KEY=your-secret-key` in `.env`. Protected endpoints require the `X-API-Key` header.
+
+**Protected endpoints**: `/predict`, `/predict/batch`, all `/monitor/*` endpoints.
+**Public endpoints**: `/`, `/health`, `/model-info`.
+
+```bash
+# Example authenticated request
+curl -X POST "http://localhost:8000/predict" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-secret-key" \
+  -d @customer_data.json
+```
+
+## Rate Limiting
+
+Built-in IP-based rate limiting (sliding window):
+- **Default**: 100 requests per 60 seconds per IP
+- **Configuration**: `RATE_LIMIT_WINDOW` (seconds) and `RATE_LIMIT_MAX` (requests) environment variables
+- **Response**: HTTP 429 when limit exceeded
 
 ## Endpoints
 
@@ -44,56 +62,55 @@ Welcome endpoint with basic service information.
 
 Service health check. Verifies model and preprocessor availability.
 
-**Response**:
+**Response** (healthy):
 ```json
 {
   "status": "healthy",
   "model_loaded": true,
   "preprocessor_loaded": true,
-  "timestamp": "2026-02-16T10:30:00Z"
+  "artifacts_exist": true
 }
 ```
 
+**Response** (degraded — artifacts missing):
+```json
+{
+  "status": "degraded",
+  "model_loaded": false,
+  "preprocessor_loaded": false,
+  "artifacts_exist": false
+}
+```
+
+> **Note**: This endpoint always returns HTTP 200. Check the `status` field to determine service health. Kubernetes probes should check `status == "healthy"`.
+
 **Status Codes**:
-- `200 OK` - Service is healthy
-- `503 Service Unavailable` - Model or preprocessor not loaded
+- `200 OK` - Always returned (check `status` field for actual health)
 
 ---
 
 #### `GET /model-info`
 
-Retrieve metadata and performance metrics for the active model.
+Retrieve performance metrics for the active model.
 
 **Response**:
 ```json
 {
   "model_name": "XGBoost",
-  "version": "0.1.0",
-  "metrics": {
-    "accuracy": 0.8127,
-    "precision": 0.6771,
-    "recall": 0.5562,
-    "f1_score": 0.6108,
-    "roc_auc": 0.8501
-  },
-  "feature_importance": {
-    "TotalCharges": 0.156,
-    "MonthlyCharges": 0.142,
-    "tenure": 0.138,
-    "Contract_Two year": 0.089,
-    "InternetService_Fiber optic": 0.067
-  },
-  "training_date": "2026-02-15T14:22:10Z",
-  "data_shape": {
-    "n_samples": 7043,
-    "n_features": 19
-  }
+  "accuracy": 0.8127,
+  "precision": 0.6771,
+  "recall": 0.5562,
+  "f1": 0.6108,
+  "roc_auc": 0.8501,
+  "pr_auc": 0.7234
 }
 ```
 
+> **Note**: Metrics are returned as flat top-level fields (not nested under `metrics`). All metric fields are nullable — they return `null` if not available.
+
 **Status Codes**:
 - `200 OK` - Success
-- `404 Not Found` - Model info file not found
+- `404 Not Found` - Model has not been trained yet
 
 ---
 
@@ -153,26 +170,23 @@ Predict churn risk for a single customer.
 **Response**:
 ```json
 {
-  "prediction": "Yes",
+  "prediction": 1,
   "churn_probability": 0.73,
-  "risk_level": "HIGH",
-  "confidence": 0.73,
-  "model_version": "0.1.0",
-  "prediction_id": "pred_20260216_103045_a7f3c2"
+  "risk_level": "Yüksek",
+  "customerID": "API_USER"
 }
 ```
 
 **Response Fields**:
-- `prediction`: Binary churn prediction ("Yes" or "No")
+- `prediction`: Binary churn prediction (`0` stay, `1` churn)
 - `churn_probability`: Probability of churn (0.0-1.0)
-- `risk_level`: Risk categorization ("LOW" < 0.3, "MEDIUM" 0.3-0.7, "HIGH" > 0.7)
-- `confidence`: Model confidence score
-- `model_version`: Version of model used
-- `prediction_id`: Unique identifier for this prediction
+- `risk_level`: Risk categorization ("Düşük", "Orta", "Yüksek")
+- `customerID`: Customer identifier
 
 **Status Codes**:
 - `200 OK` - Prediction successful
 - `422 Unprocessable Entity` - Invalid input data
+- `503 Service Unavailable` - Model artifacts missing
 - `500 Internal Server Error` - Prediction failed
 
 **Example cURL**:
@@ -209,7 +223,7 @@ Predict churn risk for multiple customers in a single request.
 ```
 
 **Request Limits**:
-- Maximum 1000 customers per batch
+- Maximum 100 customers per batch
 - Request timeout: 60 seconds
 
 **Response**:
@@ -217,221 +231,132 @@ Predict churn risk for multiple customers in a single request.
 {
   "predictions": [
     {
-      "customer_index": 0,
-      "prediction": "Yes",
+      "prediction": 1,
       "churn_probability": 0.73,
-      "risk_level": "HIGH",
-      "confidence": 0.73
+      "risk_level": "Yüksek",
+      "customerID": "CUST_001"
     },
     {
-      "customer_index": 1,
-      "prediction": "No",
+      "prediction": 0,
       "churn_probability": 0.22,
-      "risk_level": "LOW",
-      "confidence": 0.78
+      "risk_level": "Düşük",
+      "customerID": "CUST_002"
     }
   ],
-  "summary": {
-    "total_customers": 2,
-    "predicted_churners": 1,
-    "churn_rate": 0.50,
-    "avg_churn_probability": 0.475,
-    "processing_time_ms": 45
-  },
-  "model_version": "0.1.0",
-  "batch_id": "batch_20260216_103055_b9e1f7"
+  "total": 2,
+  "churn_count": 1,
+  "churn_rate": 50.0
 }
 ```
 
 **Status Codes**:
 - `200 OK` - Batch prediction successful
-- `422 Unprocessable Entity` - Invalid input data or batch size exceeded
+- `400 Bad Request` - Batch size exceeded
+- `422 Unprocessable Entity` - Invalid input data
+- `503 Service Unavailable` - Model artifacts missing
 - `500 Internal Server Error` - Prediction failed
 
 ---
 
 ### Monitoring API
 
-#### `GET /monitoring/drift`
+#### `GET /monitor/stats`
 
-Check for data drift in recent predictions.
+Retrieve prediction stats from logs.
 
 **Query Parameters**:
-- `window_days` (optional, default=7): Number of days to analyze
+- `days` (optional, default=7): lookback window in days
 
-**Example**: `GET /monitoring/drift?window_days=7`
+**Response**:
+```json
+{
+  "total_predictions": 120,
+  "churn_count": 35,
+  "churn_rate": 29.17,
+  "avg_churn_probability": 0.46,
+  "risk_distribution": {
+    "Düşük": 52,
+    "Orta": 33,
+    "Yüksek": 35
+  }
+}
+```
+
+---
+
+#### `GET /monitor/drift`
+
+Analyze drift on recent prediction features.
 
 **Response**:
 ```json
 {
   "drift_detected": true,
-  "drift_score": 0.27,
-  "threshold": 0.25,
-  "features_with_drift": [
-    {
-      "feature": "MonthlyCharges",
-      "ks_statistic": 0.18,
-      "psi_score": 0.31,
-      "drift_detected": true
-    },
-    {
-      "feature": "tenure",
-      "ks_statistic": 0.09,
-      "psi_score": 0.12,
-      "drift_detected": false
-    }
-  ],
-  "analysis_period": {
-    "start_date": "2026-02-09",
-    "end_date": "2026-02-16",
-    "n_predictions": 1523
-  },
-  "recommendation": "RETRAIN_RECOMMENDED",
-  "timestamp": "2026-02-16T10:35:00Z"
+  "drifted_features": ["MonthlyCharges", "Contract"],
+  "total_features_checked": 6,
+  "drift_ratio": 0.3333,
+  "alert_level": "critical",
+  "sample_size": 500,
+  "threshold": 0.3
 }
 ```
 
-**Status Codes**:
-- `200 OK` - Drift analysis successful
-- `400 Bad Request` - Invalid parameters
-- `500 Internal Server Error` - Analysis failed
-
 ---
 
-#### `GET /monitoring/predictions`
+#### `GET /monitor/health-report`
 
-Retrieve logged prediction history.
-
-**Query Parameters**:
-- `limit` (optional, default=100): Maximum number of records
-- `offset` (optional, default=0): Pagination offset
-- `start_date` (optional): Filter from date (ISO format)
-- `end_date` (optional): Filter to date (ISO format)
-- `risk_level` (optional): Filter by risk level ("LOW", "MEDIUM", "HIGH")
-
-**Example**: `GET /monitoring/predictions?limit=50&risk_level=HIGH`
+Get combined monitoring decision (performance + drift).
 
 **Response**:
 ```json
 {
-  "predictions": [
-    {
-      "prediction_id": "pred_20260216_103045_a7f3c2",
-      "timestamp": "2026-02-16T10:30:45Z",
-      "prediction": "Yes",
-      "churn_probability": 0.73,
-      "risk_level": "HIGH",
-      "model_version": "0.1.0",
-      "input_hash": "7f3a9b..."
-    }
-  ],
-  "pagination": {
-    "total": 1523,
-    "limit": 50,
-    "offset": 0,
-    "has_more": true
-  }
+  "timestamp": "2026-02-16T10:35:00",
+  "needs_retrain": true,
+  "retrain_reason": ["performance_degraded", "drift_detected"],
+  "overall_status": "retrain_needed",
+  "performance": {},
+  "drift": {}
 }
 ```
 
-**Status Codes**:
-- `200 OK` - Logs retrieved successfully
-- `400 Bad Request` - Invalid parameters
-
 ---
 
-#### `GET /monitoring/status`
-
-Get comprehensive monitoring status.
-
-**Response**:
-```json
-{
-  "model_status": "HEALTHY",
-  "drift_status": "WARNING",
-  "last_drift_check": "2026-02-16T10:35:00Z",
-  "drift_score": 0.19,
-  "predictions_today": 342,
-  "predictions_total": 15234,
-  "last_retrain": "2026-02-10T08:15:00Z",
-  "days_since_retrain": 6,
-  "avg_prediction_time_ms": 12.5,
-  "model_version": "0.1.0"
-}
-```
-
-**Status Codes**:
-- `200 OK` - Status retrieved successfully
-
----
-
-#### `POST /monitoring/retrain`
+#### `POST /monitor/retrain`
 
 Trigger model retraining pipeline.
 
-**Request Body** (optional):
-```json
-{
-  "force": false,
-  "notify": true
-}
-```
-
-**Parameters**:
-- `force` (optional): Skip performance checks, always retrain
-- `notify` (optional): Send notifications on completion
+**Query Parameters**:
+- `force` (optional, default=`false`): skip cooldown and checks
 
 **Response**:
 ```json
 {
-  "status": "RETRAINING_STARTED",
-  "job_id": "retrain_20260216_104000",
-  "estimated_time_minutes": 15,
-  "message": "Retraining pipeline initiated successfully"
+  "retrained": true,
+  "reason": "manual",
+  "message": "Retrain tamamlandı",
+  "timestamp": "2026-02-16T10:40:00"
 }
 ```
-
-**Status Codes**:
-- `202 Accepted` - Retraining started
-- `409 Conflict` - Retraining already in progress
-- `500 Internal Server Error` - Failed to start retraining
 
 ---
 
-#### `GET /monitoring/retrain/history`
+#### `GET /monitor/retrain-history`
 
-View retraining history and results.
-
-**Query Parameters**:
-- `limit` (optional, default=10): Number of records
+View retraining history.
 
 **Response**:
 ```json
 {
-  "retraining_history": [
+  "history": [
     {
-      "job_id": "retrain_20260210_081500",
-      "start_time": "2026-02-10T08:15:00Z",
-      "end_time": "2026-02-10T08:28:32Z",
-      "duration_minutes": 13.5,
-      "status": "COMPLETED",
-      "old_model_accuracy": 0.8127,
-      "new_model_accuracy": 0.8245,
-      "improvement": 0.0118,
-      "model_replaced": true
+      "timestamp": "2026-02-10T08:15:00",
+      "reason": "drift_detected",
+      "best_model": "LogisticRegression",
+      "best_f1": 0.6321
     }
-  ],
-  "summary": {
-    "total_retrainings": 5,
-    "successful": 5,
-    "failed": 0,
-    "avg_improvement": 0.0092
-  }
+  ]
 }
 ```
-
-**Status Codes**:
-- `200 OK` - History retrieved successfully
 
 ---
 
@@ -458,19 +383,6 @@ All endpoints follow a consistent error response format:
 | 422 | Unprocessable Entity | Validation error in request body |
 | 500 | Internal Server Error | Server-side error |
 | 503 | Service Unavailable | Service temporarily unavailable |
-
----
-
-## Rate Limiting
-
-**Current**: No rate limiting implemented
-
-**Production Recommendations**:
-- 100 requests/minute per IP for `/predict`
-- 10 requests/minute per IP for `/predict/batch`
-- 20 requests/minute per IP for monitoring endpoints
-
-Implement with middleware like `slowapi` or nginx rate limiting.
 
 ---
 

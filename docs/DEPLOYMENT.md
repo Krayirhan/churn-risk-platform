@@ -674,12 +674,12 @@ docker run --memory=8g churn-risk-platform
 
 ### Issue: Model drift detected
 
-**Symptoms**: High drift scores in `/monitoring/drift`
+**Symptoms**: High drift scores in `/monitor/drift`
 
 **Response**:
 1. Investigate drift details:
    ```bash
-   python main.py --check-drift
+   python main.py --monitor
    ```
 
 2. Analyze feature distributions:

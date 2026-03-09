@@ -79,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--train` - Execute training pipeline
   - `--predict` - Interactive prediction mode
   - `--serve` - Start FastAPI server
-  - `--version` - Display version info
+  - `--info` - Display model metrics
 - Pydantic models for request/response validation
 - CORS middleware for cross-origin requests
 - Automatic OpenAPI/Swagger documentation
@@ -107,14 +107,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Conditional model replacement
   - Retraining history tracking
 - **API Endpoints**:
-  - `GET /monitoring/drift` - Drift detection results
-  - `GET /monitoring/predictions` - Prediction logs
-  - `GET /monitoring/status` - Monitoring status
-  - `POST /monitoring/retrain` - Trigger retraining
-  - `GET /monitoring/retrain/history` - Retraining history
+  - `GET /monitor/stats` - Prediction statistics
+  - `GET /monitor/drift` - Drift detection results
+  - `GET /monitor/health-report` - Monitoring status
+  - `POST /monitor/retrain` - Trigger retraining
+  - `GET /monitor/retrain-history` - Retraining history
 - **CLI Commands**:
-  - `--check-drift` - Run drift detection
-  - `--view-logs` - View prediction logs
+  - `--monitor` - Run drift detection
   - `--retrain` - Trigger retraining
 - Monitoring configuration (`configs/monitoring.yaml`)
 - Test suite: 60 new tests (158 total, 85% coverage)

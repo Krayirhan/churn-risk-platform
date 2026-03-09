@@ -97,8 +97,7 @@ public class PythonApiService
             {
                 Status = "unhealthy",
                 ModelLoaded = false,
-                PreprocessorLoaded = false,
-                Timestamp = DateTime.UtcNow
+                PreprocessorLoaded = false
             };
         }
     }
@@ -110,7 +109,7 @@ public class PythonApiService
     {
         try
         {
-            var response = await _httpClient.GetAsync("/monitoring/drift");
+            var response = await _httpClient.GetAsync("/monitor/drift");
             response.EnsureSuccessStatusCode();
 
             var responseData = await response.Content.ReadAsStringAsync();

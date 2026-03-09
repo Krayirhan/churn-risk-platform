@@ -8,7 +8,9 @@
 // API AYARLARI
 // ─────────────────────────────────────────────────────────────────────────────
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:5001/api/churn',
+    // Runtime override: set window.CHURN_API_BASE_URL before loading this script
+    // or pass via Docker env → template substitution in index.html
+    BASE_URL: window.CHURN_API_BASE_URL || 'http://localhost:5001/api/churn',
     TIMEOUT: 30000
 };
 
@@ -94,8 +96,9 @@ function updateHealthStatus(data) {
 // MODEL BİLGİLERİ GÜNCELLEMESİ
 // ─────────────────────────────────────────────────────────────────────────────
 function updateModelInfo(data) {
-    if (data.metrics && data.metrics.accuracy) {
-        const accuracy = (data.metrics.accuracy * 100).toFixed(2);
+    const accuracyValue = data?.metrics?.accuracy ?? data?.accuracy;
+    if (typeof accuracyValue === 'number') {
+        const accuracy = (accuracyValue * 100).toFixed(2);
         document.getElementById('modelAccuracy').textContent = `%${accuracy}`;
     }
 }
@@ -105,8 +108,9 @@ function updateModelInfo(data) {
 // ─────────────────────────────────────────────────────────────────────────────
 function updateDriftStatus(data) {
     const driftElement = document.getElementById('driftStatus');
-    
-    if (data.driftDetected) {
+
+    const driftDetected = data?.driftDetected ?? data?.drift_detected;
+    if (driftDetected) {
         driftElement.innerHTML = '⚠️ Drift Tespit Edildi';
         driftElement.style.color = 'var(--warning-color)';
     } else {
@@ -221,9 +225,16 @@ function displayResult(result) {
     // Tahmin sonucuna göre renk ve ikon belirle
     let statusClass, iconClass, title, description;
     
-    if (result.prediction === 'Yes' || result.prediction === 'Evet') {
+    const predictionValue = typeof result.prediction === 'string'
+        ? result.prediction.toLowerCase()
+        : result.prediction;
+    const riskLevelRaw = result.riskLevel ?? result.risk_level ?? '';
+    const riskLevel = normalizeRiskLevel(riskLevelRaw);
+    const isChurn = predictionValue === 1 || predictionValue === 'yes' || predictionValue === 'evet';
+
+    if (isChurn) {
         // Müşteri kaybı riski yüksek
-        if (result.riskLevel === 'HIGH') {
+        if (riskLevel === 'HIGH') {
             statusClass = 'danger';
             iconClass = 'fa-exclamation-triangle';
             title = '⚠️ YÜKSEK RİSK - Müşteri Kayıp İhtimali Yüksek!';
@@ -249,8 +260,11 @@ function displayResult(result) {
     resultDescription.textContent = description;
     
     // Detaylı bilgileri göster
-    const probability = (result.churnProbability * 100).toFixed(1);
-    const confidence = (result.confidence * 100).toFixed(1);
+    const churnProbability = result.churnProbability ?? result.churn_probability ?? 0;
+    const confidenceRaw = result.confidence ?? churnProbability;
+    const probability = (churnProbability * 100).toFixed(1);
+    const confidence = (confidenceRaw * 100).toFixed(1);
+    const modelVersion = result.modelVersion ?? result.model_version ?? 'N/A';
     
     resultDetails.innerHTML = `
         <div class="detail-item">
@@ -259,7 +273,7 @@ function displayResult(result) {
         </div>
         <div class="detail-item">
             <h4>Risk Seviyesi</h4>
-            <p>${translateRiskLevel(result.riskLevel)}</p>
+            <p>${translateRiskLevel(riskLevelRaw)}</p>
         </div>
         <div class="detail-item">
             <h4>Güven Skoru</h4>
@@ -267,7 +281,7 @@ function displayResult(result) {
         </div>
         <div class="detail-item">
             <h4>Model Versiyonu</h4>
-            <p>${result.modelVersion}</p>
+            <p>${modelVersion}</p>
         </div>
     `;
 }
@@ -298,12 +312,24 @@ function showError(message) {
 // YARDIMCI FONKSİYONLAR
 // ─────────────────────────────────────────────────────────────────────────────
 function translateRiskLevel(level) {
+    const normalized = normalizeRiskLevel(level);
     const translations = {
         'LOW': 'Düşük',
         'MEDIUM': 'Orta',
         'HIGH': 'Yüksek'
     };
-    return translations[level] || level;
+    return translations[normalized] || level;
+}
+
+function normalizeRiskLevel(level) {
+    if (!level) return '';
+
+    const value = String(level).trim().toLowerCase();
+    if (value === 'low' || value === 'düşük' || value === 'dusuk') return 'LOW';
+    if (value === 'medium' || value === 'orta') return 'MEDIUM';
+    if (value === 'high' || value === 'yüksek' || value === 'yuksek') return 'HIGH';
+
+    return String(level).toUpperCase();
 }
 
 function incrementTodayPredictions() {

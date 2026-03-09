@@ -81,4 +81,4 @@ EXPOSE 8000
 
 # Varsayılan komut: serve modu
 # Override: docker run <image> python main.py --train
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port 8000 --workers ${WORKERS:-2}"]

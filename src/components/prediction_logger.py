@@ -51,7 +51,6 @@ class PredictionLoggerConfig:
         self.enabled: bool = log_cfg.get("enabled", True)
         self.log_dir: str = log_cfg.get("log_dir", "logs/predictions")
         self.file_prefix: str = log_cfg.get("file_prefix", "predictions")
-        self.rotation: str = log_cfg.get("rotation", "daily")
         self.max_retention_days: int = log_cfg.get("max_retention_days", 90)
 
 
