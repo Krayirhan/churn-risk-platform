@@ -55,15 +55,15 @@ WORKDIR /app
 
 # Builder'dan derlenmiş wheel'ları ve proje dosyalarını kopyala
 COPY --from=builder /wheels /wheels
-COPY requirements.txt pyproject.toml setup.py ./
+COPY pyproject.toml setup.py ./
 COPY src/ ./src/
 COPY configs/ ./configs/
 COPY app.py main.py ./
 
-# pip install et (requirements.txt'deki -e . için setup.py gerekli)
+# Tüm wheels'i kur (requirements.txt yerine glob kullanarak -e . sorununu ortadan kaldır)
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
-    rm -rf /wheels requirements.txt
+    pip install --no-cache-dir /wheels/*.whl && \
+    rm -rf /wheels
 
 # Artifact ve data dizinlerini oluştur (volume mount noktaları)
 RUN mkdir -p artifacts data/raw logs models && \
