@@ -114,6 +114,11 @@ function updateModelInfo(data) {
         const accuracy = (accuracyValue * 100).toFixed(2);
         document.getElementById('modelAccuracy').textContent = `%${accuracy}`;
     }
+    // Model adını dinamik güncelle
+    const modelName = data?.model_name ?? data?.modelName ?? data?.metrics?.model_name;
+    if (modelName) {
+        document.getElementById('activeModelName').textContent = modelName;
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -272,8 +277,11 @@ function displayResult(result) {
     
     // Detaylı bilgileri göster
     const churnProbability = result.churnProbability ?? result.churn_probability ?? 0;
-    const retentionProbability = ((1 - churnProbability) * 100).toFixed(1);  // Kalma olasılığı
     const probability = (churnProbability * 100).toFixed(1);
+    // Gerçek güven skoru: modelin kararsızlıktan (P=0.5) ne kadar uzak olduğu
+    // Formül: (max(P, 1-P) - 0.5) * 2  →  P=0.5'te %0, P=0 veya P=1'de %100
+    const maxP = Math.max(churnProbability, 1 - churnProbability);
+    const confidence = ((maxP - 0.5) * 2 * 100).toFixed(1);
     const modelVersion = result.modelVersion ?? result.model_version ?? 'N/A';
     
     resultDetails.innerHTML = `
@@ -286,8 +294,8 @@ function displayResult(result) {
             <p>${translateRiskLevel(riskLevelRaw)}</p>
         </div>
         <div class="detail-item">
-            <h4>Kalma Olasılığı</h4>
-            <p>${retentionProbability}%</p>
+            <h4>Güven Skoru</h4>
+            <p>${confidence}%</p>
         </div>
         <div class="detail-item">
             <h4>Model</h4>
