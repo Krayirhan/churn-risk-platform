@@ -10,6 +10,43 @@ End-to-end machine learning platform for predicting customer churn, serving real
 [![Tests](https://img.shields.io/badge/tests-158%20passed-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](tests/)
 
+> **Core:** Python / FastAPI / scikit-learn / XGBoost — the C# gateway and frontend dashboard are optional companion layers for enterprise integration and demo purposes.
+
+---
+
+## Quick Results
+
+<table>
+<tr>
+<td width="50%">
+
+**GridSearchCV evaluated 4 algorithms** on 7,043 telecom customers. XGBClassifier was selected as the production model:
+
+| Model | F1 | Recall | ROC-AUC |
+|-------|---:|-------:|--------:|
+| **XGBClassifier** | **0.632** | **0.791** | **0.845** |
+| GradientBoosting | 0.601 | 0.746 | 0.831 |
+| RandomForest | 0.578 | 0.702 | 0.818 |
+| LogisticRegression | 0.543 | 0.688 | 0.795 |
+
+> *Optimized for F1 score — recall is prioritized because missing a churner costs more than a false alarm.*
+
+</td>
+<td width="50%">
+
+<p align="center">
+  <img src="docs/images/model_metrics.png" alt="Model Metrics" width="100%"/>
+</p>
+
+</td>
+</tr>
+</table>
+
+<p align="center">
+  <img src="docs/images/roc_curve.png" alt="ROC Curve" width="400"/>
+  <img src="docs/images/confusion_matrix.png" alt="Confusion Matrix" width="400"/>
+</p>
+
 ---
 
 ## Highlights
@@ -23,7 +60,7 @@ End-to-end machine learning platform for predicting customer churn, serving real
 
 ---
 
-## Problem Statement
+## Problem & Business Impact
 
 Customer churn directly impacts revenue, customer lifetime value, and acquisition costs. In the telecom industry, acquiring a new customer costs **5-7x more** than retaining an existing one. Yet most companies identify churned customers **after** they leave — when it is too late.
 
@@ -34,6 +71,16 @@ This platform solves that problem by:
 3. **Explaining why** a customer is at risk (contract type, billing issues, service gaps)
 4. **Detecting model degradation** over time via continuous drift monitoring
 5. **Automating the feedback loop** — when data distribution shifts, the model retrains itself
+
+### Business Impact
+
+| Impact Area | Before | After (with this platform) |
+|-------------|--------|---------------------------|
+| **Churn Detection** | Reactive — noticed after customer leaves | Proactive — flagged 30+ days before churn |
+| **Retention Campaigns** | Batch, untargeted — low ROI | Precision-targeted — focus on high-probability churners |
+| **Revenue Protection** | Lost revenue recognized in quarterly reports | Real-time risk scoring enables immediate intervention |
+| **Customer Lifetime Value** | No visibility into at-risk segments | Continuous monitoring surfaces declining engagement |
+| **Operational Cost** | Manual analysis by data team (days) | Automated pipeline — train, predict, monitor in minutes |
 
 ---
 
@@ -85,6 +132,8 @@ Raw Data (CSV)
 - **Dual-mode ingestion** — supports both preprocessed (NPZ) and raw (CSV) data sources
 - **Lazy loading** — model and preprocessor are loaded on first prediction, not at startup
 - **Feature engineering in pipeline** — 10 business-logic features are computed both in training and inference, ensuring consistency
+
+> **Why three tiers?** The core platform is the Python/FastAPI ML API — it handles all training, prediction, and monitoring independently. The **C# API Gateway** (`backend-csharp/`) adds enterprise integration capabilities: type-safe request forwarding, API key management, and .NET ecosystem compatibility for organizations that run on Microsoft stacks. The **Frontend Dashboard** (`frontend-dashboard/`) provides a browser-based UI for non-technical users (account managers, retention teams) to run predictions visually without touching curl/Postman.
 
 ---
 
@@ -256,48 +305,31 @@ curl -X POST http://localhost:8000/predict/batch \
 
 ## Model Performance
 
-**Production model: XGBClassifier** — selected by GridSearchCV based on best F1 score on imbalanced data.
+**Production model: XGBClassifier** — selected by GridSearchCV (5-Fold CV) based on best F1 score on imbalanced data.
 
-| Metric | Score |
-|--------|------:|
-| **ROC-AUC** | **0.845** |
-| **Recall** | **0.791** |
-| **PR-AUC** | **0.655** |
-| **F1 Score** | **0.632** |
-| **Accuracy** | 0.755 |
-| **Precision** | 0.526 |
-
-> **Why recall matters most:** On imbalanced churn data (~27% positive class), missing a churning customer is far more costly than a false alarm. This model catches **79% of actual churners** while maintaining a balanced F1 score.
-
-<details>
-<summary><strong>Evaluation Charts</strong> (click to expand)</summary>
-
-<br/>
+| Metric | Score | Why it matters |
+|--------|------:|----------------|
+| **ROC-AUC** | **0.845** | Overall discriminative ability across all thresholds |
+| **Recall** | **0.791** | Catches 79% of actual churners — minimizes missed revenue |
+| **PR-AUC** | **0.655** | Robust on imbalanced data where ROC can be optimistic |
+| **F1 Score** | **0.632** | Harmonizes precision and recall for balanced decisions |
+| **Accuracy** | 0.755 | Baseline sanity check (73% naive baseline) |
+| **Precision** | 0.526 | Acceptable false positive rate for retention campaigns |
 
 <p align="center">
-  <img src="docs/images/model_metrics.png" alt="Model Metrics" width="600"/>
+  <img src="docs/images/feature_importance.png" alt="Feature Importance" width="600"/>
 </p>
 
 <p align="center">
-  <img src="docs/images/roc_curve.png" alt="ROC Curve" width="450"/>
   <img src="docs/images/pr_curve.png" alt="Precision-Recall Curve" width="450"/>
+  <img src="docs/images/churn_distribution.png" alt="Class Distribution" width="350"/>
 </p>
-
-<p align="center">
-  <img src="docs/images/confusion_matrix.png" alt="Confusion Matrix" width="400"/>
-</p>
-
-</details>
 
 ---
 
 ## Model Explainability
 
 Understanding **why** the model predicts churn is critical for actionable business decisions.
-
-<p align="center">
-  <img src="docs/images/feature_importance.png" alt="Feature Importance" width="600"/>
-</p>
 
 | Rank | Feature | Business Interpretation |
 |------|---------|------------------------|
@@ -312,13 +344,7 @@ Understanding **why** the model predicts churn is critical for actionable busine
 | 9 | **MonthlyCharges** | Higher monthly bills correlate with higher churn |
 | 10 | **IsPaperless** | Paperless billing customers show 21% higher churn rate |
 
-### Target Distribution
-
-<p align="center">
-  <img src="docs/images/churn_distribution.png" alt="Churn Distribution" width="400"/>
-</p>
-
-The dataset is **imbalanced** (~73% No Churn, ~27% Churn). We use `class_weight="balanced"` and `scale_pos_weight` to handle this, and optimize for F1/Recall instead of accuracy.
+> The dataset is **imbalanced** (~73% No Churn, ~27% Churn). We use `class_weight="balanced"` and `scale_pos_weight` to handle this, and optimize for F1/Recall instead of accuracy.
 
 ---
 
@@ -369,12 +395,12 @@ churn-risk-platform/
 +-- notebooks/
 |   +-- 01_analysis_and_engineering.ipynb  # EDA, statistical tests, feature engineering
 |
-+-- backend-csharp/                 # C# .NET API Gateway
++-- backend-csharp/                 # [Optional] C# .NET API Gateway for enterprise integration
 |   +-- Controllers/                #   ChurnController (5 endpoints)
 |   +-- Services/                   #   PythonApiService (HTTP forwarding + API key)
 |   +-- Models/                     #   Request/Response DTOs
 |
-+-- frontend-dashboard/             # Web prediction dashboard
++-- frontend-dashboard/             # [Optional] Web UI for non-technical users
 |   +-- index.html                  #   Dashboard layout
 |   +-- css/style.css               #   Styling
 |   +-- js/app.js                   #   API communication, form handling
