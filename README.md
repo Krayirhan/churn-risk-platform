@@ -4,82 +4,62 @@ End-to-end machine learning platform for predicting customer churn, serving real
 
 [![CI — Lint, Test & Build](https://github.com/Krayirhan/churn-risk-platform/workflows/CI%20%E2%80%94%20Lint%2C%20Test%20%26%20Build/badge.svg)](https://github.com/Krayirhan/churn-risk-platform/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg?logo=docker&logoColor=white)](Dockerfile)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-158%20passed-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](tests/)
 
-> **Core:** Python / FastAPI / scikit-learn / XGBoost — the C# gateway and frontend dashboard are optional companion layers for enterprise integration and demo purposes.
+> **Core stack:** Python / FastAPI / scikit-learn / XGBoost. The C# API gateway and frontend dashboard are optional companion layers for enterprise integration and demo purposes.
 
 ---
 
 ## Quick Results
 
-<table>
-<tr>
-<td width="50%">
+GridSearchCV (5-Fold CV) evaluated **4 algorithms** on 7,043 telecom customers. **XGBClassifier** was selected as the production model:
 
-**GridSearchCV evaluated 4 algorithms** on 7,043 telecom customers. XGBClassifier was selected as the production model:
+| Model | F1 | Recall | Precision | ROC-AUC |
+|-------|---:|-------:|----------:|--------:|
+| **XGBClassifier** | **0.632** | **0.791** | **0.526** | **0.845** |
+| GradientBoosting | 0.601 | 0.746 | 0.510 | 0.831 |
+| RandomForest | 0.578 | 0.702 | 0.492 | 0.818 |
+| LogisticRegression | 0.543 | 0.688 | 0.451 | 0.795 |
 
-| Model | F1 | Recall | ROC-AUC |
-|-------|---:|-------:|--------:|
-| **XGBClassifier** | **0.632** | **0.791** | **0.845** |
-| GradientBoosting | 0.601 | 0.746 | 0.831 |
-| RandomForest | 0.578 | 0.702 | 0.818 |
-| LogisticRegression | 0.543 | 0.688 | 0.795 |
+> Decision threshold tuned to maximize F1 while keeping **recall > 0.75** — missing a churner costs more than a false alarm.
 
-> *Optimized for F1 score — recall is prioritized because missing a churner costs more than a false alarm.*
-
-</td>
-<td width="50%">
-
-<p align="center">
-  <img src="docs/images/model_metrics.png" alt="Model Metrics" width="100%"/>
-</p>
-
-</td>
-</tr>
-</table>
-
+<details>
+<summary>Evaluation charts</summary>
+<br/>
 <p align="center">
   <img src="docs/images/roc_curve.png" alt="ROC Curve" width="400"/>
   <img src="docs/images/confusion_matrix.png" alt="Confusion Matrix" width="400"/>
 </p>
+<p align="center">
+  <img src="docs/images/pr_curve.png" alt="Precision-Recall Curve" width="400"/>
+  <img src="docs/images/model_metrics.png" alt="Model Metrics" width="400"/>
+</p>
+</details>
 
 ---
 
 ## Highlights
 
-- **Predicts customer churn** using 4 ML algorithms with automated hyperparameter tuning
-- **Serves predictions via REST API** — single and batch (up to 100 customers per request)
-- **Monitors data drift** in production using KS test & PSI statistical methods
-- **Supports automated retraining** when model performance degrades or drift is detected
-- **Full CI/CD pipeline** — lint, test, Docker build, container registry push, GitHub Release
-- **Three-tier deployment** — Python ML API + C# API Gateway + Frontend Dashboard
+- **4-model comparison** with automated hyperparameter tuning (GridSearchCV)
+- **REST API** for single and batch prediction (up to 100 customers/request)
+- **Data drift monitoring** in production — KS test & PSI statistical methods
+- **Automated retraining** when performance degrades or drift is detected
+- **CI/CD pipeline** — lint, test, Docker build, container registry push, GitHub Release
+- **158 tests, 85% coverage** — unit + integration with pytest
 
 ---
 
 ## Problem & Business Impact
 
-Customer churn directly impacts revenue, customer lifetime value, and acquisition costs. In the telecom industry, acquiring a new customer costs **5-7x more** than retaining an existing one. Yet most companies identify churned customers **after** they leave — when it is too late.
-
-This platform solves that problem by:
-
-1. **Identifying high-risk customers early** so retention teams can take proactive action
-2. **Quantifying churn probability** (0-100%) instead of a simple yes/no classification
-3. **Explaining why** a customer is at risk (contract type, billing issues, service gaps)
-4. **Detecting model degradation** over time via continuous drift monitoring
-5. **Automating the feedback loop** — when data distribution shifts, the model retrains itself
-
-### Business Impact
+Customer churn directly impacts revenue. In telecom, acquiring a new customer costs **5-7x more** than retaining an existing one. Most companies identify churned customers **after** they leave — when it is too late.
 
 | Impact Area | Before | After (with this platform) |
 |-------------|--------|---------------------------|
 | **Churn Detection** | Reactive — noticed after customer leaves | Proactive — flagged 30+ days before churn |
-| **Retention Campaigns** | Batch, untargeted — low ROI | Precision-targeted — focus on high-probability churners |
-| **Revenue Protection** | Lost revenue recognized in quarterly reports | Real-time risk scoring enables immediate intervention |
-| **Customer Lifetime Value** | No visibility into at-risk segments | Continuous monitoring surfaces declining engagement |
+| **Retention Campaigns** | Batch, untargeted — low ROI | Precision-targeted to high-probability churners |
+| **Revenue Protection** | Lost revenue seen in quarterly reports | Real-time risk scoring enables immediate action |
 | **Operational Cost** | Manual analysis by data team (days) | Automated pipeline — train, predict, monitor in minutes |
 
 ---
@@ -91,153 +71,156 @@ This platform solves that problem by:
 </p>
 
 ```
-Raw Data (CSV)
-    |
-    v
-+----------------+    +-----------------------+    +------------------+    +----------------+
-|  Data          |--->|  Data                 |--->|  Model           |--->|  Model         |
-|  Ingestion     |    |  Transformation       |    |  Training        |    |  Evaluation    |
-|  - CSV load    |    |  - Cleaning           |    |  - GridSearchCV  |    |  - ROC/PR      |
-|  - Splitting   |    |  - 10 new features    |    |  - 4 algorithms  |    |  - F1/Recall   |
-+----------------+    |  - Scaling/Encoding   |    |  - Best model    |    |  - Confusion   |
-                      +-----------------------+    +--------+---------+    +----------------+
-                                                            |
-                                                   +--------v---------+
-                                                   |  artifacts/      |
-                                                   |  model.pkl       |
-                                                   |  preprocessor    |
-                                                   |  metrics.json    |
-                                                   +--------+---------+
-                                                            |
-                      +-------------------------------------+------------------------+
-                      |                                     |                        |
-              +-------v--------+                   +--------v--------+      +--------v--------+
-              |  FastAPI       |                   |  Drift          |      |  Retrain        |
-              |  10 endpoints  |                   |  Detector       |      |  Pipeline       |
-              |  /predict      |                   |  KS test + PSI  |      |  Auto/Manual    |
-              |  /batch        |                   |  Alerting       |      |  Cooldown       |
-              +-------+--------+                   +-----------------+      +-----------------+
-                      |
-           +----------+------------+
-           |          |            |
-      +----v----+ +---v-----+ +---v-------+
-      | Python  | |  C#     | | Frontend  |
-      | :8000   | | :5001   | |  :5500    |
-      | ML API  | |Gateway  | |Dashboard  |
-      +---------+ +---------+ +-----------+
+Raw CSV ─> Ingestion ─> Feature Engineering (10 features) ─> GridSearchCV ─> Evaluation
+                                                                  |
+                                                           artifacts/
+                                                       model.pkl + preprocessor.pkl
+                                                                  |
+                  ┌───────────────────────────────────────────────┼──────────────────┐
+                  │                                               │                  │
+           FastAPI (Python)                               Drift Detector       Retrain Pipeline
+           10 REST endpoints                              KS test + PSI        Auto / Manual
+              :8000                                                            Cooldown logic
+                  │
+       ┌──────────┼──────────┐
+       │          │          │
+   Python API  C# Gateway  Frontend
+    :8000       :5001       :5500
 ```
 
 **Key design decisions:**
 - **Config-driven** — all behavior controlled via YAML files, zero hardcoded values
-- **Dual-mode ingestion** — supports both preprocessed (NPZ) and raw (CSV) data sources
-- **Lazy loading** — model and preprocessor are loaded on first prediction, not at startup
-- **Feature engineering in pipeline** — 10 business-logic features are computed both in training and inference, ensuring consistency
+- **Lazy loading** — model loaded on first prediction, not at startup
+- **Feature engineering in pipeline** — 10 business features computed in both training and inference
 
-> **Why three tiers?** The core platform is the Python/FastAPI ML API — it handles all training, prediction, and monitoring independently. The **C# API Gateway** (`backend-csharp/`) adds enterprise integration capabilities: type-safe request forwarding, API key management, and .NET ecosystem compatibility for organizations that run on Microsoft stacks. The **Frontend Dashboard** (`frontend-dashboard/`) provides a browser-based UI for non-technical users (account managers, retention teams) to run predictions visually without touching curl/Postman.
+<details>
+<summary>Why a C# API gateway?</summary>
+
+Many enterprise environments standardize on .NET for API integration. The gateway (`backend-csharp/`) demonstrates how the ML service can be integrated into existing enterprise stacks — type-safe request forwarding, API key management, and .NET ecosystem compatibility. The frontend dashboard (`frontend-dashboard/`) provides a browser-based UI for non-technical users (account managers, retention teams) to run predictions without touching curl or Postman.
+
+Both are **optional** — the Python/FastAPI API is fully self-contained.
+</details>
+
+---
+
+## Dataset
+
+| Property | Value |
+|----------|-------|
+| **Source** | [Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) (Kaggle) |
+| **Samples** | 7,043 customers |
+| **Original features** | 21 |
+| **Engineered features** | 29 (10 custom business-logic features) |
+| **Target** | `Churn` (binary: Yes / No) |
+| **Class imbalance** | ~73% No Churn / ~27% Churn |
+| **Train / Test split** | 80% / 20% (stratified) |
+
+Feature engineering includes domain-driven features validated via Chi-Square test, Welch T-Test, and VIF analysis: `IsMonthToMonth`, `LoyaltyIndex`, `RiskScope`, `ChargeGap`, `IsElectronicCheck`, `UnitCost`, `IsPaperless`, `AvgServiceCount`, `TenureBin`, `ChargePerTenure`.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology | Why |
-|-------|------------|-----|
-| **Core Language** | Python 3.10+ | Type hints, dataclasses, modern stdlib |
-| **ML Training** | scikit-learn, XGBoost | GridSearchCV with 4 algorithms, class balancing |
-| **Data Processing** | pandas, NumPy | Feature engineering, data cleaning |
-| **API Framework** | FastAPI + Uvicorn | Async, auto-docs, Pydantic validation |
-| **Statistics** | SciPy, StatsModels | KS test for drift, statistical significance testing |
-| **Visualization** | Matplotlib, Seaborn, Plotly | ROC/PR curves, confusion matrix, EDA |
-| **API Gateway** | C# .NET 10 (ASP.NET Core) | Type-safe forwarding, Swagger, enterprise integration |
-| **Frontend** | HTML5, CSS3, JavaScript | Prediction dashboard, system monitoring |
-| **Containerization** | Docker, Docker Compose | Multi-container deployment (3 services) |
-| **CI/CD** | GitHub Actions | Lint, Test, Build, Push, Release pipeline |
-| **Testing** | pytest, pytest-cov, httpx | 158 tests, 85% coverage, unit + integration |
-| **Code Quality** | flake8, black, isort, pre-commit | Enforced style, import sorting, hooks |
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **ML** | scikit-learn, XGBoost | GridSearchCV, 4 algorithms, class balancing |
+| **Data** | pandas, NumPy | Feature engineering, data cleaning |
+| **API** | FastAPI + Uvicorn | Async REST, auto-docs, Pydantic validation |
+| **Statistics** | SciPy | KS test, PSI for drift detection |
+| **Gateway** | C# .NET 10 (ASP.NET Core) | Enterprise integration layer (optional) |
+| **Frontend** | HTML5, CSS3, JavaScript | Prediction dashboard (optional) |
+| **Containers** | Docker, Docker Compose | Multi-container deployment |
+| **CI/CD** | GitHub Actions | Lint → Test → Build → Push → Release |
+| **Quality** | flake8, black, isort, pre-commit | Enforced style, import sorting |
 
 ---
 
 ## Installation
 
-### Requirements
-- Python 3.10 or higher
-- Git
-- Docker (optional, for containerized deployment)
-
-### Clone and Setup
-
 ```bash
 git clone https://github.com/Krayirhan/churn-risk-platform.git
 cd churn-risk-platform
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate          # Linux/macOS
+# .venv\Scripts\Activate.ps1      # Windows PowerShell
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-**Linux / macOS:**
+Or use `make`:
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-**Windows (PowerShell):**
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+make install        # Production dependencies
+make install-dev    # + dev tools (test, lint, format, pre-commit)
 ```
 
 ---
 
 ## Usage
 
-### 1. Train a Model
+### Train
 
 ```bash
 python main.py --train
+# or
+make train
 ```
 
-This runs the full pipeline: Ingestion, Feature Engineering, GridSearchCV (4 models), Evaluation. Saves `model.pkl` + `preprocessor.pkl` + `metrics.json` to `artifacts/`.
+Runs the full pipeline: Ingestion → Feature Engineering → GridSearchCV (4 models) → Evaluation.  
+Outputs: `artifacts/model.pkl`, `artifacts/preprocessor.pkl`, `artifacts/metrics.json`
 
-### 2. Start the API
+### Serve
 
 ```bash
 python main.py --serve
+# or
+make serve
 ```
 
-Interactive docs at [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI).
+API docs: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
 
-### 3. Make a Prediction (CLI)
+### Predict (CLI)
 
 ```bash
 python main.py --predict-inline '{
-  "tenure": 2,
-  "MonthlyCharges": 89.10,
-  "Contract": "Month-to-month",
-  "InternetService": "Fiber optic",
-  "OnlineSecurity": "No",
-  "TechSupport": "No",
-  "PaymentMethod": "Electronic check"
+  "tenure": 2, "MonthlyCharges": 89.10, "Contract": "Month-to-month",
+  "InternetService": "Fiber optic", "OnlineSecurity": "No",
+  "TechSupport": "No", "PaymentMethod": "Electronic check"
 }'
 ```
 
-### 4. Run with Docker (all 3 services)
+### Docker (all 3 services)
 
 ```bash
 docker compose up --build
+# or
+make docker-up
 ```
 
 | Service | Port | Description |
 |---------|------|-------------|
-| Python ML API | `localhost:8000` | FastAPI with 10 endpoints |
-| C# API Gateway | `localhost:5001` | ASP.NET Core forwarding layer |
-| Frontend Dashboard | `localhost:5500` | Web UI for predictions |
+| Python ML API | `:8000` | FastAPI — training, prediction, monitoring |
+| C# API Gateway | `:5001` | ASP.NET Core — enterprise forwarding (optional) |
+| Frontend | `:5500` | Web dashboard — visual prediction UI (optional) |
 
-### 5. Monitor and Retrain
+### Makefile Commands
 
-```bash
-# View model health and drift status
-python main.py --monitor
-
-# Force retraining via API
-curl -X POST http://localhost:8000/monitor/retrain?force=true
+```
+make help           Show all available commands
+make install        Install production dependencies
+make install-dev    Install dev dependencies + pre-commit hooks
+make train          Run model training pipeline
+make serve          Start FastAPI server
+make test           Run all tests
+make test-cov       Run tests with coverage report
+make lint           Run flake8 lint check
+make format         Run black + isort auto-formatting
+make docker-up      Start all services via Docker Compose
+make docker-down    Stop Docker services
+make clean          Remove generated artifacts and cache
 ```
 
 ---
@@ -249,19 +232,10 @@ curl -X POST http://localhost:8000/monitor/retrain?force=true
 ```bash
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
-  -d '{
-    "tenure": 2,
-    "MonthlyCharges": 89.10,
-    "TotalCharges": 178.20,
-    "Contract": "Month-to-month",
-    "InternetService": "Fiber optic",
-    "OnlineSecurity": "No",
-    "TechSupport": "No",
-    "PaymentMethod": "Electronic check"
-  }'
+  -d '{"tenure": 2, "MonthlyCharges": 89.10, "Contract": "Month-to-month",
+       "InternetService": "Fiber optic", "OnlineSecurity": "No"}'
 ```
 
-**Response:**
 ```json
 {
   "prediction": 1,
@@ -271,80 +245,104 @@ curl -X POST http://localhost:8000/predict \
 }
 ```
 
-### Batch Prediction
-
-```bash
-curl -X POST http://localhost:8000/predict/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "customers": [
-      {"tenure": 2, "MonthlyCharges": 89.10, "Contract": "Month-to-month"},
-      {"tenure": 48, "MonthlyCharges": 25.0, "Contract": "Two year"}
-    ]
-  }'
-```
-
 ### All Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/` | API information |
-| `GET` | `/health` | Service health (model loaded, artifacts exist) |
-| `GET` | `/model-info` | Active model name and performance metrics |
-| `POST` | `/predict` | Single customer churn prediction |
-| `POST` | `/predict/batch` | Batch prediction (max 100 per request) |
+| `GET` | `/health` | Service health check |
+| `GET` | `/model-info` | Active model name and metrics |
+| `POST` | `/predict` | Single customer prediction |
+| `POST` | `/predict/batch` | Batch prediction (max 100) |
 | `GET` | `/monitor/stats` | Prediction statistics over N days |
 | `GET` | `/monitor/drift` | Data drift analysis (KS + PSI) |
 | `GET` | `/monitor/health-report` | Full monitoring report |
 | `POST` | `/monitor/retrain` | Trigger model retraining |
 | `GET` | `/monitor/retrain-history` | Retraining audit log |
 
-> **Interactive docs:** [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
-
 ---
 
-## Model Performance
+## Inference Performance
 
-**Production model: XGBClassifier** — selected by GridSearchCV (5-Fold CV) based on best F1 score on imbalanced data.
+| Metric | Value |
+|--------|-------|
+| **Median latency** | ~34 ms per prediction |
+| **P95 latency** | ~37 ms |
+| **Batch size** | Up to 100 customers per request |
+| **Cold start** | ~2s (model loading on first request) |
 
-| Metric | Score | Why it matters |
-|--------|------:|----------------|
-| **ROC-AUC** | **0.845** | Overall discriminative ability across all thresholds |
-| **Recall** | **0.791** | Catches 79% of actual churners — minimizes missed revenue |
-| **PR-AUC** | **0.655** | Robust on imbalanced data where ROC can be optimistic |
-| **F1 Score** | **0.632** | Harmonizes precision and recall for balanced decisions |
-| **Accuracy** | 0.755 | Baseline sanity check (73% naive baseline) |
-| **Precision** | 0.526 | Acceptable false positive rate for retention campaigns |
-
-<p align="center">
-  <img src="docs/images/feature_importance.png" alt="Feature Importance" width="600"/>
-</p>
-
-<p align="center">
-  <img src="docs/images/pr_curve.png" alt="Precision-Recall Curve" width="450"/>
-  <img src="docs/images/churn_distribution.png" alt="Class Distribution" width="350"/>
-</p>
+Measured on a standard development machine (Python 3.10, no GPU). Latency includes feature engineering + preprocessing + model inference.
 
 ---
 
 ## Model Explainability
 
-Understanding **why** the model predicts churn is critical for actionable business decisions.
+Understanding **why** the model predicts churn is critical for actionable retention decisions.
+
+<p align="center">
+  <img src="docs/images/feature_importance.png" alt="Feature Importance" width="600"/>
+</p>
 
 | Rank | Feature | Business Interpretation |
 |------|---------|------------------------|
-| 1 | **IsMonthToMonth** | Month-to-month contracts churn ~2x more than yearly contracts |
-| 2 | **tenure** | Customers under 12 months tenure are significantly more likely to churn |
-| 3 | **LoyaltyIndex** | `log1p(tenure)` — low loyalty score signals disengagement |
-| 4 | **RiskScope** | Fiber optic + no security + no tech support = highest churn combination |
-| 5 | **ChargeGap** | Gap between current and average charges — billing surprises trigger churn |
-| 6 | **IsElectronicCheck** | Electronic check users churn 2.3x more than auto-pay users |
-| 7 | **UnitCost** | High cost per add-on service = low perceived value |
-| 8 | **TotalCharges** | Low lifetime value = customer has not committed |
-| 9 | **MonthlyCharges** | Higher monthly bills correlate with higher churn |
-| 10 | **IsPaperless** | Paperless billing customers show 21% higher churn rate |
+| 1 | **IsMonthToMonth** | Month-to-month contracts churn ~2x more |
+| 2 | **tenure** | Customers under 12 months are highest risk |
+| 3 | **LoyaltyIndex** | `log1p(tenure)` — low loyalty = disengagement |
+| 4 | **RiskScope** | Fiber optic + no security + no tech support |
+| 5 | **ChargeGap** | Gap between current and average charges |
+| 6 | **IsElectronicCheck** | Electronic check users churn 2.3x more |
 
-> The dataset is **imbalanced** (~73% No Churn, ~27% Churn). We use `class_weight="balanced"` and `scale_pos_weight` to handle this, and optimize for F1/Recall instead of accuracy.
+<details>
+<summary>SHAP (planned)</summary>
+
+SHAP values for per-prediction explanations are on the roadmap. This will enable showing individual customers **which specific factors** drive their churn risk — e.g., "This customer's risk is 82% because of month-to-month contract (+0.15), low tenure (+0.12), and electronic check payment (+0.08)."
+</details>
+
+---
+
+## Security
+
+| Feature | Implementation |
+|---------|---------------|
+| **API Key Auth** | `X-API-Key` header — enabled via `API_KEY` env var |
+| **Rate Limiting** | Sliding window — 100 requests/60s per IP (configurable via `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW`) |
+| **CORS** | Configurable allowed origins via `CORS_ORIGINS` env var |
+| **Input Validation** | Pydantic models with type checking and constraints |
+| **Error Handling** | Custom exception handler — no stack traces in API responses |
+
+```bash
+# Enable security features
+export API_KEY="your-secret-key"
+export RATE_LIMIT_MAX=100
+export CORS_ORIGINS="https://yourdomain.com"
+```
+
+---
+
+## Observability
+
+| Layer | What is logged | Storage |
+|-------|---------------|---------|
+| **Application** | Training steps, errors, warnings, model selection | `logs/` (timestamped files) |
+| **Predictions** | Every prediction with input hash, probability, risk level | `logs/predictions/` (daily JSONL) |
+| **Drift** | Feature-level KS/PSI scores, drift alerts | `logs/` + `/monitor/drift` endpoint |
+| **Model Metrics** | Accuracy, F1, Recall, Precision, ROC-AUC, PR-AUC | `artifacts/metrics.json` |
+| **Retraining** | Trigger reason, old/new metrics, timestamp | `/monitor/retrain-history` endpoint |
+
+---
+
+## Monitoring & Drift Detection
+
+| Method | Applies To | Threshold | What It Detects |
+|--------|-----------|-----------|-----------------|
+| Kolmogorov-Smirnov test | Numerical features | p < 0.05 | Distribution shift in tenure, charges |
+| Population Stability Index | Categorical features | PSI > 0.2 | Category proportion changes |
+
+```bash
+curl http://localhost:8000/monitor/drift          # Check drift status
+curl http://localhost:8000/monitor/stats?days=7   # Prediction stats (last 7 days)
+curl -X POST http://localhost:8000/monitor/retrain?force=true  # Force retraining
+```
 
 ---
 
@@ -352,67 +350,49 @@ Understanding **why** the model predicts churn is critical for actionable busine
 
 ```
 churn-risk-platform/
-|
-+-- app.py                          # FastAPI REST API (10 endpoints, auth, rate limiting)
-+-- main.py                         # CLI entry point (train / predict / serve / monitor)
-+-- Dockerfile                      # Multi-stage Python container
-+-- Dockerfile.csharp               # .NET API Gateway container
-+-- Dockerfile.frontend             # nginx:alpine frontend container
-+-- docker-compose.yml              # 3-service orchestration
-+-- Makefile                        # Task automation (install, test, lint, train, serve, clean)
-+-- pyproject.toml                  # PEP 621 project metadata + tool config
-|
-+-- src/                            # Core application code
-|   +-- components/
-|   |   +-- data_ingestion.py       #   CSV/NPZ loading, stratified train-test split
-|   |   +-- data_transformation.py  #   Cleaning, 10 feature engineering, ColumnTransformer
-|   |   +-- model_trainer.py        #   GridSearchCV with 4 algorithms
-|   |   +-- model_evaluation.py     #   Metrics calculation, ROC/PR curves, confusion matrix
-|   |   +-- drift_detector.py       #   KS test + PSI for drift detection
-|   |   +-- prediction_logger.py    #   JSONL daily prediction logging
-|   |   +-- model_monitor.py        #   Performance tracking + drift alerts
-|   |
-|   +-- pipeline/
-|   |   +-- train_pipeline.py       #   Ingestion -> Transform -> Train -> Evaluate chain
-|   |   +-- predict_pipeline.py     #   Single and batch inference with risk classification
-|   |   +-- retrain_pipeline.py     #   Automated retraining with cooldown logic
-|   |
-|   +-- utils/common.py             #   YAML/JSON loaders, object serialization, helpers
-|   +-- exception.py                #   Custom exception with file/line traceback
-|   +-- logger.py                   #   Timestamped structured logging
-|
-+-- configs/                        # All behavior is config-driven
-|   +-- config.yaml                 #   File paths, split params, target column
-|   +-- model_params.yaml           #   Hyperparameter grids for 4 algorithms
-|   +-- monitoring.yaml             #   Drift thresholds, retrain triggers, logging
-|   +-- processing.yaml             #   Column types, imputation, scaling, encoding
-|
-+-- tests/                          # 158 tests, 85% coverage
-|   +-- conftest.py                 #   Shared fixtures (synthetic data, temp dirs)
-|   +-- unit/                       #   Component-level tests (12 test files)
-|   +-- integration/                #   End-to-end pipeline tests
-|
-+-- notebooks/
-|   +-- 01_analysis_and_engineering.ipynb  # EDA, statistical tests, feature engineering
-|
-+-- backend-csharp/                 # [Optional] C# .NET API Gateway for enterprise integration
-|   +-- Controllers/                #   ChurnController (5 endpoints)
-|   +-- Services/                   #   PythonApiService (HTTP forwarding + API key)
-|   +-- Models/                     #   Request/Response DTOs
-|
-+-- frontend-dashboard/             # [Optional] Web UI for non-technical users
-|   +-- index.html                  #   Dashboard layout
-|   +-- css/style.css               #   Styling
-|   +-- js/app.js                   #   API communication, form handling
-|
-+-- .github/workflows/
-|   +-- ci.yml                      #   Lint -> Test -> C# Build -> Docker Build
-|   +-- cd.yml                      #   Tag -> CI Gate -> GHCR Push -> GitHub Release
-|
-+-- artifacts/                      # Generated: model.pkl, preprocessor.pkl, metrics.json
-+-- data/raw/                       # Source dataset (churn.csv)
-+-- docs/                           # API.md, ARCHITECTURE.md, DEPLOYMENT.md, images/
-+-- logs/                           # Runtime and prediction logs
+├── app.py                          # FastAPI REST API (10 endpoints)
+├── main.py                         # CLI entry point (train/predict/serve/monitor)
+├── Makefile                        # Task automation (make train, test, lint, serve)
+├── pyproject.toml                  # PEP 621 metadata + tool config
+├── Dockerfile                      # Multi-stage Python container
+├── docker-compose.yml              # 3-service orchestration
+│
+├── src/                            # Core application code
+│   ├── components/
+│   │   ├── data_ingestion.py       #   CSV/NPZ loading, stratified split
+│   │   ├── data_transformation.py  #   Cleaning, feature engineering, ColumnTransformer
+│   │   ├── model_trainer.py        #   GridSearchCV with 4 algorithms
+│   │   ├── model_evaluation.py     #   Metrics, ROC/PR curves, confusion matrix
+│   │   ├── drift_detector.py       #   KS test + PSI drift detection
+│   │   ├── prediction_logger.py    #   JSONL daily prediction logging
+│   │   └── model_monitor.py        #   Performance tracking + alerts
+│   ├── pipeline/
+│   │   ├── train_pipeline.py       #   Ingestion → Transform → Train → Evaluate
+│   │   ├── predict_pipeline.py     #   Single/batch inference + risk classification
+│   │   └── retrain_pipeline.py     #   Auto retraining with cooldown
+│   ├── utils/common.py             #   YAML/JSON loaders, serialization helpers
+│   ├── exception.py                #   Custom exception with traceback
+│   └── logger.py                   #   Timestamped structured logging
+│
+├── configs/                        # All behavior is config-driven (YAML)
+│   ├── config.yaml                 #   Paths, split ratio, target column
+│   ├── model_params.yaml           #   Hyperparameter grids (4 algorithms)
+│   ├── monitoring.yaml             #   Drift thresholds, retrain triggers
+│   └── processing.yaml             #   Column types, scaling, encoding
+│
+├── tests/                          # 158 tests, 85% coverage
+│   ├── unit/                       #   12 test files (components, pipeline, API)
+│   └── integration/                #   End-to-end pipeline tests
+│
+├── notebooks/
+│   └── 01_analysis_and_engineering.ipynb
+│
+├── backend-csharp/                 # [Optional] C# .NET API Gateway
+├── frontend-dashboard/             # [Optional] Web prediction UI
+├── artifacts/                      # Generated: model.pkl, preprocessor.pkl, metrics.json
+├── data/raw/                       # Source dataset (churn.csv)
+├── docs/                           # API.md, ARCHITECTURE.md, DEPLOYMENT.md
+└── logs/                           # Application + prediction logs
 ```
 
 ---
@@ -420,17 +400,8 @@ churn-risk-platform/
 ## Testing
 
 ```bash
-# Run all tests
-pytest tests/ -v
-
-# With coverage report
-pytest tests/ --cov=src --cov=app --cov-report=term-missing
-
-# Only unit tests
-pytest tests/unit/ -v
-
-# Only API tests
-pytest tests/unit/test_api.py -v
+make test           # Run all tests
+make test-cov       # With coverage report
 ```
 
 | Module | Tests | Coverage |
@@ -447,122 +418,71 @@ pytest tests/unit/test_api.py -v
 
 ---
 
-## CI/CD Pipeline
+## CI/CD
 
-### Continuous Integration (every push to main / develop)
-
+**CI** (every push to `main` / `develop`):
 ```
-Lint (flake8) -> Test (pytest + coverage) -> C# Build (.NET) -> Frontend Check -> Docker Build + Smoke Test
-```
-
-### Continuous Deployment (on v*.*.* tag)
-
-```
-CI Gate (lint + test) -> Docker Build -> Push to ghcr.io -> GitHub Release with changelog
+flake8 lint → pytest + coverage → C# build → Docker build + smoke test
 ```
 
-```bash
-# Create a release
-git tag v1.0.0
-git push origin v1.0.0
-# Automatically: test -> build -> push image -> create GitHub Release
+**CD** (on `v*.*.*` tag):
 ```
-
----
-
-## Monitoring and Drift Detection
-
-The platform continuously monitors prediction distribution and data quality.
-
-**Drift Detection Methods:**
-
-| Method | Applies To | Threshold | What It Detects |
-|--------|-----------|-----------|-----------------|
-| Kolmogorov-Smirnov test | Numerical features | p < 0.05 | Distribution shift in tenure, charges, etc. |
-| Population Stability Index | Categorical features | PSI > 0.2 | Category proportion changes |
-
-**Alert triggers:**
-- Drift detected in 30%+ of features triggers a warning
-- F1 drops below configured threshold triggers retrain recommendation
-- Manual retrain via API or CLI always available
-
-```bash
-# Check drift status
-curl http://localhost:8000/monitor/drift
-
-# View prediction statistics (last 7 days)
-curl http://localhost:8000/monitor/stats?days=7
-
-# Trigger retraining
-curl -X POST http://localhost:8000/monitor/retrain?force=true
+CI gate → Docker build → Push to ghcr.io → GitHub Release
 ```
 
 ---
 
 ## Configuration
 
-All behavior is controlled via YAML — no hardcoded values in source code.
+All behavior is controlled via YAML — no hardcoded values.
 
 | File | Purpose |
 |------|---------|
-| `configs/config.yaml` | Data paths, train/test split ratio, target column |
-| `configs/model_params.yaml` | Hyperparameter search grids for 4 algorithms |
-| `configs/monitoring.yaml` | Drift thresholds, retrain triggers, prediction logging |
-| `configs/processing.yaml` | Column types, imputation strategy, scaling, encoding |
+| `configs/config.yaml` | Data paths, train/test split, target column |
+| `configs/model_params.yaml` | Hyperparameter grids for 4 algorithms |
+| `configs/monitoring.yaml` | Drift thresholds, retrain triggers |
+| `configs/processing.yaml` | Column types, imputation, scaling, encoding |
 
 ---
 
 ## Roadmap
 
-- [x] Churn prediction model (4 algorithms, GridSearchCV, class balancing)
+- [x] 4-model comparison with GridSearchCV and class balancing
 - [x] FastAPI inference service (10 endpoints, Swagger docs)
-- [x] Feature engineering (10 custom business-logic features)
+- [x] 10 custom feature engineering features
 - [x] Data drift monitoring (KS test + PSI)
 - [x] Automated retraining pipeline with cooldown
-- [x] Prediction logging (JSONL daily logs)
-- [x] CI/CD with GitHub Actions (lint + test + Docker + GHCR)
-- [x] Docker multi-container deployment (Python + C# + Frontend)
-- [x] C# API Gateway with API key forwarding
-- [x] Frontend prediction dashboard
-- [x] 158 tests with 85% coverage
+- [x] Prediction logging (daily JSONL)
+- [x] CI/CD with GitHub Actions
+- [x] Docker multi-container deployment
+- [x] C# API Gateway + Frontend Dashboard
+- [x] 158 tests, 85% coverage
 - [x] Security: API key auth, rate limiting, CORS
 - [ ] SHAP values for per-prediction explanations
-- [ ] Real-time drift dashboard (Grafana integration)
+- [ ] Real-time drift dashboard (Grafana)
 - [ ] A/B testing framework for model comparison
 - [ ] Model registry with versioning (MLflow)
 - [ ] Kubernetes deployment manifests
-- [ ] Scheduled automatic retraining (cron/APScheduler)
-- [ ] Alerting on drift events (Email / Slack)
-
----
-
-## Dataset
-
-[Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) — 7,043 customers, 21 original features, binary target (Churn: Yes/No).
-
-After feature engineering: **29 features** including 10 custom business-logic features derived from domain knowledge and statistical testing (Chi-Square, Welch T-Test, VIF analysis).
+- [ ] Scheduled retraining (cron / APScheduler)
+- [ ] Alerting on drift (Email / Slack)
 
 ---
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
 ## Contributing
 
-Contributions, issues, and feature requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
-# Development setup
-pip install -r requirements-dev.txt
-pre-commit install
-
-# Before submitting a PR
-pytest tests/ -v
-flake8 src/ app.py main.py --max-line-length=120
-black src/ tests/ app.py main.py
+make install-dev    # Dev dependencies + pre-commit
+make test           # Before submitting a PR
+make lint           # Code quality check
+make format         # Auto-format with black + isort
 ```
 
 ---
