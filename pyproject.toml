@@ -39,13 +39,6 @@ classifiers = [
     "Framework :: FastAPI",
 ]
 
-[project.urls]
-Homepage = "https://github.com/Krayirhan/churn-risk-platform"
-Documentation = "https://github.com/Krayirhan/churn-risk-platform#readme"
-Repository = "https://github.com/Krayirhan/churn-risk-platform.git"
-Issues = "https://github.com/Krayirhan/churn-risk-platform/issues"
-Changelog = "https://github.com/Krayirhan/churn-risk-platform/blob/main/CHANGELOG.md"
-
 dependencies = [
     "pandas",
     "numpy",
@@ -61,6 +54,13 @@ dependencies = [
     "uvicorn[standard]",
     "joblib",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Krayirhan/churn-risk-platform"
+Documentation = "https://github.com/Krayirhan/churn-risk-platform#readme"
+Repository = "https://github.com/Krayirhan/churn-risk-platform.git"
+Issues = "https://github.com/Krayirhan/churn-risk-platform/issues"
+Changelog = "https://github.com/Krayirhan/churn-risk-platform/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
