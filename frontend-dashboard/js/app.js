@@ -122,13 +122,6 @@ function updateModelInfo(data) {
     if (modelName) {
         document.getElementById('activeModelName').textContent = modelName;
     }
-    // Recall / F1 / AUC metriklerini güncelle
-    const recall = data?.recall ?? data?.metrics?.recall;
-    const f1 = data?.f1 ?? data?.metrics?.f1;
-    const auc = data?.roc_auc ?? data?.rocAuc ?? data?.metrics?.roc_auc;
-    if (typeof recall === 'number') document.getElementById('modelRecall').textContent = (recall * 100).toFixed(1) + '%';
-    if (typeof f1 === 'number') document.getElementById('modelF1').textContent = f1.toFixed(4);
-    if (typeof auc === 'number') document.getElementById('modelAuc').textContent = auc.toFixed(4);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
