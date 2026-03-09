@@ -19,10 +19,10 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "DS Team", email = "dev@churn-risk-platform.com"}
+    {name = "DS Team", email = "fusturan@gmail.com"}
 ]
 maintainers = [
-    {name = "Krayirhan", email = "dev@churn-risk-platform.com"}
+    {name = "Krayirhan", email = "fusturan@gmail.com"}
 ]
 keywords = ["churn", "machine-learning", "fastapi", "mlops", "telco", "customer-churn", "prediction"]
 classifiers = [

@@ -43,7 +43,7 @@ RUN pip install --upgrade pip && \
 FROM python:3.10-slim AS runtime
 
 # Meta bilgiler
-LABEL maintainer="DS Team <dev@churn-risk-platform.com>"
+LABEL maintainer="DS Team <fusturan@gmail.com>"
 LABEL description="Telco Customer Churn Risk Platform — FastAPI Serving"
 LABEL version="0.1.0"
 
