@@ -21,7 +21,7 @@
       "roc_auc": 0.8279,
       "weighted_score": 0.6977,
       "winner": false,
-      "accuracy": null
+      "accuracy": 0.758
     },
     {
       "name": "LGBMClassifier",
@@ -31,7 +31,7 @@
       "roc_auc": 0.8365,
       "weighted_score": 0.6363,
       "winner": false,
-      "accuracy": null
+      "accuracy": 0.7814
     },
     {
       "name": "RandomForestClassifier",
@@ -41,7 +41,7 @@
       "roc_auc": 0.8331,
       "weighted_score": 0.6128,
       "winner": false,
-      "accuracy": null
+      "accuracy": 0.7828
     },
     {
       "name": "CatBoostClassifier",
@@ -51,7 +51,7 @@
       "roc_auc": 0.8389,
       "weighted_score": 0.6073,
       "winner": false,
-      "accuracy": null
+      "accuracy": 0.7921
     },
     {
       "name": "GradientBoostingClassifier",
@@ -61,7 +61,7 @@
       "roc_auc": 0.8393,
       "weighted_score": 0.6023,
       "winner": false,
-      "accuracy": null
+      "accuracy": 0.7906
     }
   ]
 }
