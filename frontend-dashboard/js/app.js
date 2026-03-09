@@ -11,8 +11,21 @@ const API_CONFIG = {
     // Runtime override: set window.CHURN_API_BASE_URL before loading this script
     // or pass via Docker env → template substitution in index.html
     BASE_URL: window.CHURN_API_BASE_URL || 'http://localhost:5001/api/churn',
-    TIMEOUT: 30000
+    TIMEOUT: 30000,
+    // Runtime override: set window.CHURN_API_KEY for authenticated requests
+    API_KEY: window.CHURN_API_KEY || ''
 };
+
+/**
+ * Build common headers for API requests.
+ * Includes X-API-Key if configured.
+ */
+function getHeaders(contentType) {
+    const headers = {};
+    if (contentType) headers['Content-Type'] = contentType;
+    if (API_CONFIG.API_KEY) headers['X-API-Key'] = API_CONFIG.API_KEY;
+    return headers;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SAYFA YÜKLENİNCE ÇALIŞACAKLAR
@@ -43,20 +56,20 @@ document.addEventListener('DOMContentLoaded', function() {
 async function checkSystemHealth() {
     try {
         // Model durumunu kontrol et
-        const healthResponse = await fetch(`${API_CONFIG.BASE_URL}/health`);
+        const healthResponse = await fetch(`${API_CONFIG.BASE_URL}/health`, { headers: getHeaders() });
         const healthData = await healthResponse.json();
         
         updateHealthStatus(healthData);
         
         // Model bilgilerini al
-        const modelResponse = await fetch(`${API_CONFIG.BASE_URL}/model-info`);
+        const modelResponse = await fetch(`${API_CONFIG.BASE_URL}/model-info`, { headers: getHeaders() });
         const modelData = await modelResponse.json();
         
         updateModelInfo(modelData);
         
         // Drift durumunu kontrol et (opsiyonel)
         try {
-            const driftResponse = await fetch(`${API_CONFIG.BASE_URL}/drift`);
+            const driftResponse = await fetch(`${API_CONFIG.BASE_URL}/drift`, { headers: getHeaders() });
             const driftData = await driftResponse.json();
             updateDriftStatus(driftData);
         } catch (error) {
@@ -137,9 +150,7 @@ async function handlePrediction(event) {
         // API'ye istek gönder
         const response = await fetch(`${API_CONFIG.BASE_URL}/predict`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getHeaders('application/json'),
             body: JSON.stringify(customerData)
         });
         

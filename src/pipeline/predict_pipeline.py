@@ -345,6 +345,11 @@ class PredictPipeline:
         """
         try:
             logging.info(f"🔮 Toplu tahmin başlatılıyor ({len(data_list)} müşteri)...")
+
+            if not data_list:
+                logging.info("  ✅ Boş liste — 0 tahmin")
+                return []
+
             self._load_artifacts()
 
             results = []

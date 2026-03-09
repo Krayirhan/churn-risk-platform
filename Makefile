@@ -116,12 +116,18 @@ docker-logs: ## 🐳 Container loglarını göster
 	docker-compose logs -f python-backend
 
 # ──────────────────────────────────────────────────────────────
-# CLEAN — Temizlik
+# CLEAN — Temizlik (Linux/macOS + Windows uyumlu)
 # ──────────────────────────────────────────────────────────────
 clean: ## 🧹 Geçici dosyaları temizle
+ifeq ($(OS),Windows_NT)
+	powershell -NoProfile -Command "Get-ChildItem -Recurse -Directory -Filter '__pycache__' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+	powershell -NoProfile -Command "Get-ChildItem -Recurse -Directory -Filter '.pytest_cache' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+	powershell -NoProfile -Command "Get-ChildItem -Recurse -Directory -Filter '*.egg-info' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+	powershell -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue htmlcov,.coverage,coverage.xml,test-results.xml,dist,build"
+else
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-	rm -rf htmlcov .coverage coverage.xml test-results.xml
-	rm -rf dist build
+	rm -rf htmlcov .coverage coverage.xml test-results.xml dist build
+endif
 	@echo "✅ Temizlik tamamlandı"

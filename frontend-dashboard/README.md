@@ -110,13 +110,24 @@ Mobil, tablet ve masaüstünde düzgün görünür
 
 ### API Adresi Değiştirme
 
-`js/app.js` dosyasının başında:
+`js/app.js` dosyasında runtime override desteklenir:
 
 ```javascript
+// Varsayılan ayarlar — runtime'da override edilebilir
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:5001/api/churn',
-    TIMEOUT: 30000
+    BASE_URL: window.CHURN_API_BASE_URL || 'http://localhost:5001/api/churn',
+    TIMEOUT: 30000,
+    API_KEY: window.CHURN_API_KEY || ''
 };
+```
+
+Override için `index.html`'de script tag'inden önce:
+
+```html
+<script>
+  window.CHURN_API_BASE_URL = 'https://api.example.com/api/churn';
+  window.CHURN_API_KEY = 'your-secret-key';
+</script>
 ```
 
 ### Otomatik Güncelleme Süresi

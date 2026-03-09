@@ -605,22 +605,22 @@ docker run --memory=4g churn-risk-platform
 
 ---
 
-### Issue: API returns 503 Service Unavailable
+### Issue: API health reports degraded status
 
-**Symptoms**: `/health` endpoint returns 503
+**Symptoms**: `/health` endpoint returns `{"status": "degraded", ...}`
 
 **Diagnosis**:
 ```bash
 curl -v http://localhost:8000/health
-docker exec -it churn-api ls artifacts/model_trainer/
+docker exec -it churn-python-backend ls artifacts/
 ```
 
-**Cause**: Model not loaded (missing artifacts)
+**Cause**: Model artifacts missing (model.pkl / preprocessor.pkl)
 
 **Solution**:
 ```bash
 # Re-train model
-docker exec -it churn-api python main.py --train
+docker exec -it churn-python-backend python main.py --train
 
 # Or mount pre-trained model
 docker run -v /path/to/artifacts:/app/artifacts churn-risk-platform

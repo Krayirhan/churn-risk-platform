@@ -79,6 +79,6 @@ tenure_labels: ["0-6", "7-12", "13-24", "25-48", "49-72", "72+"]
 preprocessing:
   numeric_impute_strategy: "median"     # Eksik sayıları medyan ile doldur
   categorical_impute_strategy: "most_frequent"  # Eksik kategorikleri mod ile doldur
-  scaler: "StandardScaler"              # Z-score normalizasyonu (mean=0, std=1)
-  encoder: "OneHotEncoder"              # Kategorikleri binary vektöre çevir
+  # Scaler: StandardScaler (hardcoded — data_transformation.py)
+  # Encoder: OneHotEncoder (hardcoded — data_transformation.py)
   handle_unknown: "ignore"              # Görmediği kategoriyi sıfır vektör yap

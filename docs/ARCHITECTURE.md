@@ -85,9 +85,9 @@ The Telco Customer Churn Risk Platform is built on a modular, production-ready a
 **Responsibilities**:
 - HTTP request handling
 - Input validation (Pydantic models)
-- Authentication & authorization (future)
-- Rate limiting (future)
-- CORS handling
+- API key authentication (`X-API-Key` header, opt-in)
+- IP-based rate limiting (sliding window)
+- CORS handling (configurable origins)
 - API documentation (OpenAPI/Swagger)
 
 **Key Components**:
@@ -590,38 +590,35 @@ For high-throughput scenarios:
 ## Security Architecture
 
 ### Current State
-- Open API (no authentication)
+- API key authentication (opt-in via `API_KEY` env var)
+- IP-based rate limiting (`RATE_LIMIT_WINDOW` / `RATE_LIMIT_MAX` env vars)
 - Input validation via Pydantic
-- CORS middleware
+- CORS middleware (configurable via `CORS_ALLOW_ORIGINS`)
+- C# gateway forwards `X-API-Key` header to Python backend
 
 ### Production Requirements
 
-**Authentication**:
+**Authentication** (already implemented):
 ```python
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+# Auth is opt-in: set API_KEY env var to enable
+# Protected endpoints: /predict, /predict/batch, /monitor/*
+# Public endpoints: /, /health, /model-info
+from fastapi.security import APIKeyHeader
 
-security = HTTPBearer()
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
-@app.post("/predict")
-async def predict(
-    data: CustomerInput,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    verify_token(credentials.credentials)
-    ...
+async def verify_api_key(api_key: str = Security(_api_key_header)):
+    if API_KEY is None:
+        return  # Auth disabled — dev mode
+    if api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 ```
 
-**Rate Limiting**:
+**Rate Limiting** (already implemented):
 ```python
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-
-@app.post("/predict")
-@limiter.limit("100/minute")
-async def predict(...):
-    ...
+# In-memory sliding-window IP-based rate limiter
+# Configure via RATE_LIMIT_WINDOW (seconds) and RATE_LIMIT_MAX (requests)
+# For production, consider Redis-backed rate limiter
 ```
 
 **Secrets Management**:

@@ -13,9 +13,14 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
+      - API_KEY=${API_KEY:-}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-*}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+      - WORKERS=${WORKERS:-2}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request, json; r=urllib.request.urlopen('http://localhost:8000/health'); d=json.loads(r.read()); exit(0 if d.get('status')=='healthy' else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,6 +43,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:5001
       - PythonAPI__BaseUrl=http://python-backend:8000
+      - PythonAPI__ApiKey=${API_KEY:-}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/api/churn/health"]

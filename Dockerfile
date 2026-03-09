@@ -72,9 +72,9 @@ RUN mkdir -p artifacts data/raw logs && \
 # Root olmayan kullanıcıya geç
 USER appuser
 
-# Health-check: /health endpoint'i 200 dönmeli
+# Health-check: /health endpoint'i status=healthy dönmeli
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD python -c "import urllib.request, json; r=urllib.request.urlopen('http://localhost:8000/health'); d=json.loads(r.read()); exit(0 if d.get('status')=='healthy' else 1)" || exit 1
 
 # FastAPI sunucusu
 EXPOSE 8000

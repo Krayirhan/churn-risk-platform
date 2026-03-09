@@ -106,12 +106,61 @@ jobs:
           retention-days: 30
 
   # ──────────────────────────────────────────────────────────
-  # JOB 3: Docker Build — Image doğrulaması
+  # JOB 3: C# Build — .NET backend doğrulaması
+  # ──────────────────────────────────────────────────────────
+  csharp-build:
+    name: 🔷 C# Build (.NET 8)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: .NET SDK kurulumu
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore & Build
+        working-directory: backend-csharp
+        run: |
+          dotnet restore
+          dotnet build --no-restore --configuration Release
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 4: Frontend Smoke — Statik dosya doğrulaması
+  # ──────────────────────────────────────────────────────────
+  frontend-check:
+    name: 🌐 Frontend Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: HTML/JS dosya varlığı kontrolü
+        run: |
+          echo "📁 Frontend dosya kontrolü..."
+          test -f frontend-dashboard/index.html  || { echo "❌ index.html yok"; exit 1; }
+          test -f frontend-dashboard/js/app.js   || { echo "❌ app.js yok"; exit 1; }
+          test -f frontend-dashboard/css/style.css || { echo "❌ style.css yok"; exit 1; }
+          echo "✅ Frontend dosyaları mevcut"
+
+      - name: JavaScript syntax kontrolü (Node.js)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: JS parse check
+        run: |
+          node --check frontend-dashboard/js/app.js
+          echo "✅ JavaScript syntax geçerli"
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 5: Docker Build — Image doğrulaması
   # ──────────────────────────────────────────────────────────
   docker-build:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, csharp-build, frontend-check]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -149,17 +198,17 @@ jobs:
           echo "⏳ Sunucu başlatılıyor..."
           sleep 10
 
-          # Health endpoint kontrolü
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health || echo "000")
-          echo "🏥 Health check HTTP status: $HTTP_CODE"
+          # Health endpoint kontrolü (JSON status kontrolü)
+          HEALTH_STATUS=$(curl -s http://localhost:8000/health | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status','unknown'))" 2>/dev/null || echo "unreachable")
+          echo "🏥 Health check status: $HEALTH_STATUS"
 
           # Temizle
           docker stop smoke-test && docker rm smoke-test
 
-          # 200 veya 503 (model yok ama servis ayakta) kabul edilir
-          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "503" ]; then
+          # healthy veya degraded kabul edilir (model yoksa degraded)
+          if [ "$HEALTH_STATUS" = "healthy" ] || [ "$HEALTH_STATUS" = "degraded" ]; then
             echo "✅ Smoke test passed"
           else
-            echo "❌ Smoke test failed (HTTP $HTTP_CODE)"
+            echo "❌ Smoke test failed (status: $HEALTH_STATUS)"
             exit 1
           fi

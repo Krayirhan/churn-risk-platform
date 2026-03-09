@@ -46,8 +46,7 @@ Welcome endpoint with basic service information.
 **Response**:
 ```json
 {
-  "message": "🚀 Telco Customer Churn Risk Platform",
-  "version": "0.1.0",
+  "message": "Telco Churn Risk Platform API 🚀",
   "docs": "/docs",
   "health": "/health"
 }

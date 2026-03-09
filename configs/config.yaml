@@ -22,8 +22,6 @@ artifacts:
   model_path: "artifacts/model.pkl"                        # En iyi model (pickle)
   metrics_path: "artifacts/metrics.json"                   # Değerlendirme metrikleri
   confusion_matrix_path: "artifacts/confusion_matrix.json" # Confusion matrix detayı
-  train_data_path: "artifacts/train.npz"                   # Train split (cache)
-  test_data_path: "artifacts/test.npz"                     # Test split (cache)
 
 # --- TRAIN / TEST AYRIM PARAMETRELERİ ---
 split:

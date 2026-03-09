@@ -428,9 +428,17 @@ async def predict_single(customer: CustomerInput):
             status_code=503,
             detail=f"Model henüz yüklenmedi. Önce eğitim yapın: {str(e)}",
         )
-    except Exception as e:
+    except (ValueError, Exception) as e:
+        err_msg = str(e)
+        # Model/preprocessor feature uyumsuzluğu → 503 (retrain gerekli)
+        if "features" in err_msg and ("expecting" in err_msg or "mismatch" in err_msg):
+            logging.error(f"Model uyumsuzluğu: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"Model/preprocessor uyumsuz — yeniden eğitim gerekli: {err_msg}",
+            )
         logging.error(f"Tahmin hatası: {e}")
-        raise HTTPException(status_code=500, detail=f"Tahmin hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Tahmin hatası: {err_msg}")
 
 
 @app.post("/predict/batch", response_model=BatchOutput, tags=["Tahmin"], dependencies=[Depends(verify_api_key)])
@@ -485,9 +493,16 @@ async def predict_batch(batch: BatchInput):
             status_code=503,
             detail=f"Model henüz yüklenmedi: {str(e)}",
         )
-    except Exception as e:
+    except (ValueError, Exception) as e:
+        err_msg = str(e)
+        if "features" in err_msg and ("expecting" in err_msg or "mismatch" in err_msg):
+            logging.error(f"Toplu tahmin model uyumsuzluğu: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"Model/preprocessor uyumsuz — yeniden eğitim gerekli: {err_msg}",
+            )
         logging.error(f"Toplu tahmin hatası: {e}")
-        raise HTTPException(status_code=500, detail=f"Tahmin hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Tahmin hatası: {err_msg}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

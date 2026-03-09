@@ -66,8 +66,6 @@ class DataIngestionConfig:
 
         # --- Artifacts çıktı yolları ---
         self.artifacts_dir: str = artifacts_cfg.get("base_dir", "artifacts")
-        self.train_data_path: str = artifacts_cfg.get("train_data_path", "artifacts/train.npz")
-        self.test_data_path: str = artifacts_cfg.get("test_data_path", "artifacts/test.npz")
 
         # --- Split parametreleri ---
         self.test_size: float = split_cfg.get("test_size", 0.2)

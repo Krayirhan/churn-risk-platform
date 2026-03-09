@@ -16,11 +16,27 @@ public class PythonApiService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<PythonApiService> _logger;
+    private readonly string? _apiKey;
 
-    public PythonApiService(HttpClient httpClient, ILogger<PythonApiService> logger)
+    public PythonApiService(HttpClient httpClient, ILogger<PythonApiService> logger, IConfiguration configuration)
     {
         _httpClient = httpClient;
         _logger = logger;
+        // PythonAPI:ApiKey config veya PYTHON_API_KEY env var'ından oku
+        _apiKey = configuration["PythonAPI:ApiKey"]
+                  ?? Environment.GetEnvironmentVariable("PYTHON_API_KEY");
+    }
+
+    /// <summary>
+    /// Her isteğe API key header'ı ekler (tanımlıysa).
+    /// </summary>
+    private void ApplyApiKeyHeader(HttpRequestMessage? request = null)
+    {
+        if (!string.IsNullOrEmpty(_apiKey))
+        {
+            _httpClient.DefaultRequestHeaders.Remove("X-API-Key");
+            _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiKey);
+        }
     }
 
     /// <summary>
@@ -31,6 +47,7 @@ public class PythonApiService
         try
         {
             _logger.LogInformation("Tahmin isteği gönderiliyor...");
+            ApplyApiKeyHeader();
 
             var json = JsonConvert.SerializeObject(customer);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -59,6 +76,7 @@ public class PythonApiService
         try
         {
             _logger.LogInformation("Model bilgisi getiriliyor...");
+            ApplyApiKeyHeader();
 
             var response = await _httpClient.GetAsync("/model-info");
             response.EnsureSuccessStatusCode();
@@ -82,6 +100,7 @@ public class PythonApiService
     {
         try
         {
+            ApplyApiKeyHeader();
             var response = await _httpClient.GetAsync("/health");
             response.EnsureSuccessStatusCode();
 
@@ -109,6 +128,7 @@ public class PythonApiService
     {
         try
         {
+            ApplyApiKeyHeader();
             var response = await _httpClient.GetAsync("/monitor/drift");
             response.EnsureSuccessStatusCode();
 

@@ -64,12 +64,7 @@ performance:
 retrain:
   enabled: true
   auto_retrain: false                              # true → drift algılanınca otomatik eğit
-  triggers:
-    - drift_detected                               # Data drift alert
-    - performance_degraded                         # Model performansı düştü
-    - manual                                       # Manuel tetikleme (API/CLI)
-    - scheduled                                    # Zamanlı (cron)
-  schedule:
-    interval_days: 30                              # Her 30 günde bir kontrol
+  # NOT: triggers ve schedule alanları tanımlanabilir ama şu an aktif scheduler
+  # tarafından tüketilmiyor. Retrain yalnızca POST /monitor/retrain ile tetiklenir.
   cooldown_hours: 24                               # Ardışık retrain'ler arası minimum süre
   history_path: "logs/retrain_history.json"        # Retrain geçmişi

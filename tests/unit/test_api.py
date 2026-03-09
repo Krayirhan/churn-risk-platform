@@ -97,14 +97,14 @@ class TestPredictEndpoint:
             "Contract": "Month-to-month",
         }
         response = client.post("/predict", json=payload)
-        # Model varsa 200, yoksa 503
-        assert response.status_code in (200, 500, 503)
+        # Model varsa 200, yoksa 503 — 500 kabul edilMEZ (regresyon yakalasın)
+        assert response.status_code in (200, 503)
 
     def test_predict_with_empty_body(self, client):
         """POST /predict boş body ile → varsayılanlarla çalışmalı (200 veya 503)."""
         response = client.post("/predict", json={})
         # Pydantic varsayılanlar devreye girer → model yoksa 503, varsa 200
-        assert response.status_code in (200, 500, 503)
+        assert response.status_code in (200, 503)
 
     def test_predict_with_invalid_type_returns_422(self, client):
         """POST /predict hatalı tip ile → 422 Unprocessable Entity."""
@@ -135,14 +135,15 @@ class TestBatchPredictEndpoint:
             ]
         }
         response = client.post("/predict/batch", json=payload)
-        assert response.status_code in (200, 500, 503)
+        # 500 kabul edilMEZ — regresyon yakalasın
+        assert response.status_code in (200, 503)
 
     def test_batch_empty_list(self, client):
         """POST /predict/batch boş liste ile → geçerli yanıt dönmeli."""
         payload = {"customers": []}
         response = client.post("/predict/batch", json=payload)
-        # Boş liste → 200 (0 tahmin) veya 500 (division by zero guard)
-        assert response.status_code in (200, 500, 503)
+        # Boş liste → 200 (0 tahmin) veya 503 (model yok)
+        assert response.status_code in (200, 503)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

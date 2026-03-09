@@ -16,6 +16,7 @@ import os
 import sys
 import json
 import pickle
+import platform
 import yaml
 import numpy as np
 
@@ -293,13 +294,17 @@ def evaluate_models(
             if param_grid:
                 # GridSearchCV: Tüm parametre kombinasyonlarını dener
                 # refit=True: En iyi kombinasyonla modeli yeniden eğitir
-                # n_jobs=-1: Tüm CPU çekirdeklerini kullan (paralel eğitim)
+                # n_jobs: Windows'ta -1 PermissionError verebilir → 1'e düş
+                n_jobs = int(os.getenv("GRIDSEARCH_N_JOBS", "-1"))
+                if platform.system() == "Windows" and n_jobs == -1:
+                    n_jobs = 1
+
                 gs = GridSearchCV(
                     estimator=model,
                     param_grid=param_grid,
                     cv=skf,
                     scoring=scoring,
-                    n_jobs=-1,
+                    n_jobs=n_jobs,
                     verbose=0,
                     refit=True
                 )

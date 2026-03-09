@@ -23,7 +23,8 @@ builder.Services.AddHttpClient<PythonApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["PythonAPI:BaseUrl"] 
         ?? "http://localhost:8000");
-    client.Timeout = TimeSpan.FromSeconds(30);
+    var timeout = int.TryParse(builder.Configuration["PythonAPI:TimeoutSeconds"], out var t) ? t : 30;
+    client.Timeout = TimeSpan.FromSeconds(timeout);
 });
 
 // CORS ayarları (Frontend'in API'ye erişmesi için)
