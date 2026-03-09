@@ -14,16 +14,18 @@ End-to-end machine learning platform for predicting customer churn, serving real
 
 ## Quick Results
 
-GridSearchCV (5-Fold CV) evaluated **4 algorithms** on 7,043 telecom customers. **XGBClassifier** was selected as the production model:
+GridSearchCV + Optuna (5-Fold CV) evaluated **6 algorithms** on 7,043 telecom customers. **LogisticRegression** was selected as the production model (selection criterion: `0.7 × Recall + 0.3 × F1`):
 
-| Model | F1 | Recall | Precision | ROC-AUC |
-|-------|---:|-------:|----------:|--------:|
-| **XGBClassifier** | **0.632** | **0.791** | **0.526** | **0.845** |
-| GradientBoosting | 0.601 | 0.746 | 0.510 | 0.831 |
-| RandomForest | 0.578 | 0.702 | 0.492 | 0.818 |
-| LogisticRegression | 0.543 | 0.688 | 0.451 | 0.795 |
+| Model | Recall | F1 | Precision | ROC-AUC | Accuracy | Ağırlıklı Skor |
+|-------|-------:|---:|----------:|--------:|--------:|---------------:|
+| **LogisticRegression** ★ | **80.2%** | **0.6141** | **49.8%** | **0.8453** | **73.24%** | **0.7457** |
+| XGBClassifier | 73.3% | 0.6164 | 53.2% | 0.8279 | 75.80% | 0.6977 |
+| LGBMClassifier | 64.7% | 0.6111 | 57.9% | 0.8365 | 78.14% | 0.6363 |
+| RandomForestClassifier | 61.8% | 0.6016 | 58.6% | 0.8331 | 78.28% | 0.6128 |
+| CatBoostClassifier | 60.7% | 0.6078 | 60.9% | 0.8389 | 79.21% | 0.6073 |
+| GradientBoostingClassifier | 60.2% | 0.6040 | 60.7% | 0.8393 | 79.06% | 0.6023 |
 
-> Decision threshold tuned to maximize F1 while keeping **recall > 0.75** — missing a churner costs more than a false alarm.
+> Decision threshold tuned to **0.40** (default 0.50 → optimized) — missing a churner costs more than a false alarm. Recall prioritized over Accuracy because higher-accuracy models simply predict "no churn" more often.
 
 <details>
 <summary>Evaluation charts</summary>
@@ -42,12 +44,13 @@ GridSearchCV (5-Fold CV) evaluated **4 algorithms** on 7,043 telecom customers. 
 
 ## Highlights
 
-- **4-model comparison** with automated hyperparameter tuning (GridSearchCV)
+- **6-model comparison** with automated hyperparameter tuning (GridSearchCV + Optuna 60 trials)
 - **REST API** for single and batch prediction (up to 100 customers/request)
 - **Data drift monitoring** in production — KS test & PSI statistical methods
 - **Automated retraining** when performance degrades or drift is detected
 - **CI/CD pipeline** — lint, test, Docker build, container registry push, GitHub Release
 - **158 tests, 85% coverage** — unit + integration with pytest
+- **Interactive frontend dashboard** — real-time system status, model metrics, comparison table, prediction form
 
 ---
 
@@ -123,7 +126,7 @@ Feature engineering includes domain-driven features validated via Chi-Square tes
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **ML** | scikit-learn, XGBoost | GridSearchCV, 4 algorithms, class balancing |
+| **ML** | scikit-learn, XGBoost, LightGBM, CatBoost | GridSearchCV + Optuna, 6 algorithms, SMOTE balancing |
 | **Data** | pandas, NumPy | Feature engineering, data cleaning |
 | **API** | FastAPI + Uvicorn | Async REST, auto-docs, Pydantic validation |
 | **Statistics** | SciPy | KS test, PSI for drift detection |
@@ -169,7 +172,7 @@ python main.py --train
 make train
 ```
 
-Runs the full pipeline: Ingestion → Feature Engineering → GridSearchCV (4 models) → Evaluation.  
+Runs the full pipeline: Ingestion → Feature Engineering → SMOTE → GridSearchCV + Optuna (6 models) → Threshold Optimization → Evaluation.  
 Outputs: `artifacts/model.pkl`, `artifacts/preprocessor.pkl`, `artifacts/metrics.json`
 
 ### Serve
