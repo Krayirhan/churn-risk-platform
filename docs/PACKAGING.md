@@ -312,9 +312,6 @@ bump2version major
 ### Package Metadata Validation
 
 ```bash
-# Check package description renders correctly
-python setup.py check --restructuredtext --strict
-
 # Validate package metadata
 twine check dist/*
 

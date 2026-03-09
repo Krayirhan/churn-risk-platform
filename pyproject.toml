@@ -2,7 +2,7 @@
 # pyproject.toml — Modern Python Proje Konfigürasyonu
 # ============================================================================
 # NEDEN BU DOSYA?
-#   setup.py'ın modern alternatifi. Tüm araç konfigürasyonları
+#   Tüm araç konfigürasyonları
 #   (pytest, coverage, flake8-alternatifi, black, isort) tek dosyada.
 #   PEP 621 standardına uygun.
 # ============================================================================
@@ -40,19 +40,20 @@ classifiers = [
 ]
 
 dependencies = [
-    "pandas",
-    "numpy",
-    "scikit-learn",
-    "xgboost",
-    "pyyaml",
-    "scipy",
-    "statsmodels",
-    "seaborn",
-    "matplotlib",
-    "plotly",
-    "fastapi",
-    "uvicorn[standard]",
-    "joblib",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "scikit-learn>=1.3",
+    "xgboost>=2.0",
+    "pyyaml>=6.0",
+    "scipy>=1.11",
+    "statsmodels>=0.14",
+    "seaborn>=0.13",
+    "matplotlib>=3.7",
+    "plotly>=5.15",
+    "fastapi>=0.100",
+    "uvicorn[standard]>=0.23",
+    "joblib>=1.3",
+    "nbformat>=5.9",
 ]
 
 [project.urls]
@@ -114,7 +115,6 @@ source = ["src", "app"]
 omit = [
     "tests/*",
     "notebooks/*",
-    "setup.py",
     "*/__init__.py",
 ]
 

@@ -29,8 +29,8 @@ RUN apt-get update && \
 
 WORKDIR /build
 
-# Proje dosyalarını kopyala (pip wheel için setup.py/pyproject.toml gerekli)
-COPY requirements.txt pyproject.toml setup.py ./
+# Proje dosyalarını kopyala (pip wheel için pyproject.toml gerekli)
+COPY requirements.txt pyproject.toml ./
 COPY src/ ./src/
 
 # pip wheel ile derlenmiş paketleri /wheels dizinine topla
@@ -55,7 +55,7 @@ WORKDIR /app
 
 # Builder'dan derlenmiş wheel'ları ve proje dosyalarını kopyala
 COPY --from=builder /wheels /wheels
-COPY pyproject.toml setup.py ./
+COPY pyproject.toml ./
 COPY src/ ./src/
 COPY configs/ ./configs/
 COPY app.py main.py ./
