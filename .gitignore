@@ -49,6 +49,7 @@ data/external/
 # ─── Environment ───
 .env
 .env.*
+!.env.example
 
 # ─── OS ───
 .DS_Store

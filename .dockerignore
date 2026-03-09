@@ -50,13 +50,23 @@ artifacts/*.pkl
 artifacts/*.npz
 
 # ─── Docker (kendini dahil etme) ───
-Dockerfile
+Dockerfile.csharp
+Dockerfile.frontend
 docker-compose*.yml
 .dockerignore
 
-# ─── Docs ───
+# ─── Docs & Markdown ───
 docs/
-*.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# ─── Frontend & C# (ayrı Dockerfile'ları var) ───
+frontend-dashboard/
+backend-csharp/
+
+# ─── Scripts ───
+scripts/
 
 # ─── OS ───
 .DS_Store
@@ -65,7 +75,9 @@ Thumbs.db
 # ─── Env ───
 .env
 .env.*
+!.env.example
 
-# ─── CI/CD ───
+# ─── CI/CD & Config ───
 .github/
+.pre-commit-config.yaml
 Makefile

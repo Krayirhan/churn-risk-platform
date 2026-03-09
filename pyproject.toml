@@ -150,3 +150,6 @@ known_first_party = ["src"]
 [tool.setuptools.packages.find]
 include = ["src*"]
 exclude = ["tests*", "notebooks*", "docs*"]
+
+[tool.setuptools.package-data]
+src = ["*.yaml", "*.yml", "*.json"]
