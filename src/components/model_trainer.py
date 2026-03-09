@@ -545,7 +545,7 @@ def print_model_comparison(report: dict) -> None:
         print_model_comparison(report)
     """
     print("\n" + "=" * 80)
-    print("📊 MODEL KARŞILAŞTIRMA RAPORU")
+    print("[RAPOR] MODEL KARSILASTIRMA RAPORU")
     print("=" * 80)
     print(f"{'Model':<30} {'F1':>8} {'Recall':>8} {'Precision':>10} {'AUC':>8} {'Accuracy':>10}")
     print("-" * 80)

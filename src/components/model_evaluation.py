@@ -321,10 +321,10 @@ class ModelEvaluation:
         Değerlendirme özetini güzel formatla konsola yazdırır.
         """
         print("\n" + "=" * 60)
-        print(f"📊 MODEL DEĞERLENDİRME RAPORU — {model_name}")
+        print(f"[MODEL] DEGERLENDIRME RAPORU -- {model_name}")
         print("=" * 60)
 
-        print("\n  📈 Performans Metrikleri:")
+        print("\n  [METRIK] Performans Metrikleri:")
         print(f"     Accuracy    : {metrics['accuracy']:.4f}")
         print(f"     F1-Score    : {metrics['f1']:.4f}")
         print(f"     Recall      : {metrics['recall']:.4f}")
@@ -334,18 +334,18 @@ class ModelEvaluation:
         if "pr_auc" in metrics:
             print(f"     PR-AUC      : {metrics['pr_auc']:.4f}")
 
-        print("\n  📋 Confusion Matrix:")
+        print("\n  [MATRIX] Confusion Matrix:")
         print(f"     {'':>20} Tahmin: No   Tahmin: Yes")
         print(f"     {'Gerçek: No':>20}    {cm['true_negative']:>5}        {cm['false_positive']:>5}")
         print(f"     {'Gerçek: Yes':>20}    {cm['false_negative']:>5}        {cm['true_positive']:>5}")
 
-        print("\n  💡 İş Yorumu:")
+        print("\n  [YORUM] Is Yorumu:")
         print(f"     Toplam test verisi       : {cm['total_samples']}")
         print(f"     Gerçek churn sayısı      : {cm['total_actual_churn']}")
         print(f"     Doğru yakalanan churn    : {cm['true_positive']} "
               f"(Recall: {metrics['recall']:.1%})")
         print(f"     Kaçırılan churn (FN)     : {cm['false_negative']} "
-              f"⚠ Bu müşteriler kaybolacak!")
+              f"[!] Bu musteriler kaybolacak!")
         print(f"     Yanlış alarm (FP)        : {cm['false_positive']} "
               f"(gereksiz kampanya maliyeti)")
         print("=" * 60 + "\n")

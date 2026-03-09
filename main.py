@@ -22,6 +22,10 @@ import sys
 import json
 import argparse
 
+# Windows konsolunda emoji/UTF-8 karakterlerin düzgün yazdırılması için
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 from src.logger import logging
 
 
