@@ -29,8 +29,9 @@ RUN apt-get update && \
 
 WORKDIR /build
 
-# Önce sadece requirements.txt kopyala → Docker cache'ten faydalanır
-COPY requirements.txt .
+# Proje dosyalarını kopyala (pip wheel için setup.py/pyproject.toml gerekli)
+COPY requirements.txt pyproject.toml setup.py ./
+COPY src/ ./src/
 
 # pip wheel ile derlenmiş paketleri /wheels dizinine topla
 RUN pip install --upgrade pip && \
