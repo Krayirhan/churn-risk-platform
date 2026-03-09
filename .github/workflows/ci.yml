@@ -123,8 +123,8 @@ jobs:
       - name: Restore & Build
         working-directory: backend-csharp
         run: |
-          dotnet restore
-          dotnet build --no-restore --configuration Release
+          dotnet restore ChurnRiskAPI.csproj
+          dotnet build ChurnRiskAPI.csproj --no-restore --configuration Release
 
   # ──────────────────────────────────────────────────────────
   # JOB 4: Frontend Smoke — Statik dosya doğrulaması

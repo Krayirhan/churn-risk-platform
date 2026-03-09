@@ -437,6 +437,13 @@ async def predict_single(customer: CustomerInput):
                 status_code=503,
                 detail=f"Model/preprocessor uyumsuz — yeniden eğitim gerekli: {err_msg}",
             )
+        # Artifact bulunamadı → 503 (CustomException FileNotFoundError sarıyor)
+        if "bulunamadı" in err_msg or "not found" in err_msg.lower():
+            logging.error(f"Artifact eksik: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"Model henüz yüklenmedi. Önce eğitim yapın: {err_msg}",
+            )
         logging.error(f"Tahmin hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Tahmin hatası: {err_msg}")
 
@@ -500,6 +507,13 @@ async def predict_batch(batch: BatchInput):
             raise HTTPException(
                 status_code=503,
                 detail=f"Model/preprocessor uyumsuz — yeniden eğitim gerekli: {err_msg}",
+            )
+        # Artifact bulunamadı → 503 (CustomException FileNotFoundError sarıyor)
+        if "bulunamadı" in err_msg or "not found" in err_msg.lower():
+            logging.error(f"Toplu tahmin artifact eksik: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"Model henüz yüklenmedi: {err_msg}",
             )
         logging.error(f"Toplu tahmin hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Tahmin hatası: {err_msg}")
