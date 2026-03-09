@@ -55,6 +55,11 @@
                             <h3 class="stat-title">Model Doğruluğu</h3>
                             <p class="stat-value" id="modelAccuracy">%0.00</p>
                             <span class="stat-label">Aktif Model: <span id="activeModelName">Yükleniyor...</span></span>
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; font-size:0.75rem; color:#64748b;">
+                                <span>Recall: <strong id="modelRecall">-</strong></span>
+                                <span>F1: <strong id="modelF1">-</strong></span>
+                                <span>AUC: <strong id="modelAuc">-</strong></span>
+                            </div>
                         </div>
                     </div>
 
@@ -81,7 +86,20 @@
                     </div>
                 </div>
             </section>
-
+            <!-- MODEL KARŞILAŞTIRMASI -->
+            <section class="comparison-section" style="margin-bottom: 2rem;">
+                <h2 class="section-title">Model Karşılaştırması</h2>
+                <div style="background: var(--white); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow);">
+                    <p style="font-size:0.85rem; color:#64748b; margin-bottom:1rem;">
+                        Seçim Kriteri: <strong id="selectionCriterion">Yükleniyor...</strong>
+                        &nbsp;&middot;&nbsp;
+                        Eğitim Tarihi: <strong id="trainedAt">-</strong>
+                    </p>
+                    <div id="comparisonTableContainer" style="overflow-x:auto;">
+                        <p style="color:#64748b;">Yükleniyor...</p>
+                    </div>
+                </div>
+            </section>
             <!-- TAHMİN FORMU -->
             <section class="prediction-section">
                 <h2 class="section-title">Müşteri Churn Tahmini</h2>

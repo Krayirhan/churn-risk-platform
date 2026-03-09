@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sistem durumunu kontrol et
     checkSystemHealth();
     
+    // Model karsilastirma tablosunu yukle
+    loadModelComparison();
+    
     // Form submit olayını dinle
     const form = document.getElementById('predictionForm');
     form.addEventListener('submit', handlePrediction);
@@ -119,6 +122,13 @@ function updateModelInfo(data) {
     if (modelName) {
         document.getElementById('activeModelName').textContent = modelName;
     }
+    // Recall / F1 / AUC metriklerini güncelle
+    const recall = data?.recall ?? data?.metrics?.recall;
+    const f1 = data?.f1 ?? data?.metrics?.f1;
+    const auc = data?.roc_auc ?? data?.rocAuc ?? data?.metrics?.roc_auc;
+    if (typeof recall === 'number') document.getElementById('modelRecall').textContent = (recall * 100).toFixed(1) + '%';
+    if (typeof f1 === 'number') document.getElementById('modelF1').textContent = f1.toFixed(4);
+    if (typeof auc === 'number') document.getElementById('modelAuc').textContent = auc.toFixed(4);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,8 +147,68 @@ function updateDriftStatus(data) {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────// MODEL KARŞILAŞTIRMA TABLOSU
 // ─────────────────────────────────────────────────────────────────────────────
-// TAHMİN İŞLEMİ
+async function loadModelComparison() {
+    const container = document.getElementById('comparisonTableContainer');
+    const criterionEl = document.getElementById('selectionCriterion');
+    const trainedAtEl = document.getElementById('trainedAt');
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/model-comparison`, { headers: getHeaders() });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        // Kriter ve tarih
+        if (criterionEl) criterionEl.textContent = data.selection_criterion ?? '-';
+        if (trainedAtEl) trainedAtEl.textContent = data.trained_at ?? '-';
+
+        // Tablo oluştur
+        const models = data.models ?? [];
+        if (models.length === 0) {
+            container.innerHTML = '<p style="color:#64748b;">Veri bulunamadı.</p>';
+            return;
+        }
+
+        const rows = models.map(m => {
+            const winnerBadge = m.winner
+                ? ' <span style="background:#10b981;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:99px;vertical-align:middle;">KAZANAN</span>'
+                : '';
+            const rowStyle = m.winner ? 'background:#f0fdf4;font-weight:600;' : '';
+            return `<tr style="${rowStyle}">
+                <td style="padding:10px 12px;">${m.name}${winnerBadge}</td>
+                <td style="padding:10px 12px;text-align:center;">${((m.recall ?? 0) * 100).toFixed(1)}%</td>
+                <td style="padding:10px 12px;text-align:center;">${(m.f1 ?? 0).toFixed(4)}</td>
+                <td style="padding:10px 12px;text-align:center;">${((m.precision ?? 0) * 100).toFixed(1)}%</td>
+                <td style="padding:10px 12px;text-align:center;">${(m.roc_auc ?? 0).toFixed(4)}</td>
+                <td style="padding:10px 12px;text-align:center;color:#2563eb;font-weight:600;">${(m.weighted_score ?? 0).toFixed(4)}</td>
+            </tr>`;
+        }).join('');
+
+        container.innerHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+                <thead>
+                    <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+                        <th style="padding:10px 12px;text-align:left;">Model</th>
+                        <th style="padding:10px 12px;text-align:center;">Recall</th>
+                        <th style="padding:10px 12px;text-align:center;">F1</th>
+                        <th style="padding:10px 12px;text-align:center;">Precision</th>
+                        <th style="padding:10px 12px;text-align:center;">ROC-AUC</th>
+                        <th style="padding:10px 12px;text-align:center;">Ağırlıklı Skor ★</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <p style="font-size:0.75rem;color:#94a3b8;margin-top:8px;">Ağırlıklı Skor = 0.7 × Recall + 0.3 × F1 &mdash; En yüksek skorlu model seçilir.</p>`;
+
+    } catch (err) {
+        console.warn('Model karşılaştırma yüklenemedi:', err.message);
+        if (container) container.innerHTML = '<p style="color:#94a3b8;font-size:0.85rem;">Model karşılaştırma verisi alınamadı.</p>';
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────// TAHMİN İŞLEMİ
 // ─────────────────────────────────────────────────────────────────────────────
 async function handlePrediction(event) {
     event.preventDefault();

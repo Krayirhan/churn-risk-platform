@@ -39,9 +39,10 @@ public class ChurnController : ControllerBase
             Endpoints = new[]
             {
                 "GET  /api/churn - Bu mesaj",
-                "POST /api/churn/predict - Müşteri tahmini",
+                "POST /api/churn/predict - Musteri tahmini",
                 "GET  /api/churn/model-info - Model bilgileri",
-                "GET  /api/churn/health - Sistem sağlığı",
+                "GET  /api/churn/model-comparison - Tum modellerin karsilastirmasi",
+                "GET  /api/churn/health - Sistem sagligi",
                 "GET  /api/churn/drift - Drift durumu"
             }
         });
@@ -113,6 +114,24 @@ public class ChurnController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Model bilgisi alma hatası");
+            return StatusCode(500, new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Tüm modellerin karşılaştırma tablosunu getir
+    /// </summary>
+    [HttpGet("model-comparison")]
+    public async Task<IActionResult> GetModelComparison()
+    {
+        try
+        {
+            var rawJson = await _pythonApiService.GetModelComparisonAsync();
+            return Content(rawJson, "application/json");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Model karşılaştırma hatası");
             return StatusCode(500, new { Error = ex.Message });
         }
     }

@@ -405,6 +405,25 @@ async def model_info():
     )
 
 
+@app.get("/model-comparison", tags=["Model"])
+async def model_comparison_endpoint():
+    """
+    Tüm eğitilen modellerin karşılaştırma metriklerini döndürür.
+
+    artifacts/model_comparison.json dosyasından okur.
+    Model seçim kriteri ve sıralama bilgisini içerir.
+    """
+    comparison_path = "artifacts/model_comparison.json"
+    if not os.path.exists(comparison_path):
+        raise HTTPException(
+            status_code=404,
+            detail="Model karşılaştırma verisi bulunamadı. Önce eğitim yapın.",
+        )
+
+    from src.utils.common import load_json
+    return load_json(comparison_path)
+
+
 @app.post("/predict", response_model=PredictionOutput, tags=["Tahmin"], dependencies=[Depends(verify_api_key)])
 async def predict_single(customer: CustomerInput):
     """

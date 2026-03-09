@@ -94,6 +94,28 @@ public class PythonApiService
     }
 
     /// <summary>
+    /// Model karşılaştırma verilerini getir
+    /// </summary>
+    public async Task<string> GetModelComparisonAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Model karşılaştırma getiriliyor...");
+            ApplyApiKeyHeader();
+
+            var response = await _httpClient.GetAsync("/model-comparison");
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Model karşılaştırma alma hatası!");
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Sağlık kontrolü yap
     /// </summary>
     public async Task<HealthStatus?> GetHealthStatusAsync()

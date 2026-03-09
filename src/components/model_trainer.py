@@ -523,6 +523,35 @@ class ModelTrainer:
             save_json(full_report, self.config.metrics_path)
             logging.info(f"  Metrikler kaydedildi → {self.config.metrics_path}")
 
+            # ─── ADIM 5b: Model Karşılaştırma Tablosunu Kaydet ───
+            # Frontend'in tüm modelleri dinamik olarak gösterebilmesi için
+            # ayrı bir comparison dosyasına kaydet.
+            import datetime
+            comparison_report = {
+                "best_model": best_model_name,
+                "selection_criterion": "0.7 x Recall + 0.3 x F1",
+                "trained_at": str(datetime.date.today()),
+                "models": [
+                    {
+                        "name": name,
+                        "f1": round(m["test_f1"], 4),
+                        "recall": round(m["test_recall"], 4),
+                        "precision": round(m["test_precision"], 4),
+                        "roc_auc": round(m.get("test_roc_auc", 0), 4),
+                        "weighted_score": round(model_scores[name], 4),
+                        "winner": name == best_model_name
+                    }
+                    for name, m in sorted(
+                        report.items(),
+                        key=lambda x: model_scores[x[0]],
+                        reverse=True
+                    )
+                ]
+            }
+            comparison_path = "artifacts/model_comparison.json"
+            save_json(comparison_report, comparison_path)
+            logging.info(f"  Model karsilastirma kaydedildi → {comparison_path}")
+
             logging.info("MODEL TRAINING tamamlandı.")
             logging.info("=" * 60)
 

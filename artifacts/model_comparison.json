@@ -1,0 +1,61 @@
+{
+  "best_model": "LogisticRegression",
+  "selection_criterion": "0.7 × Recall + 0.3 × F1",
+  "trained_at": "2026-03-10",
+  "models": [
+    {
+      "name": "LogisticRegression",
+      "f1": 0.6141,
+      "recall": 0.8021,
+      "precision": 0.4975,
+      "roc_auc": 0.8453,
+      "weighted_score": 0.7457,
+      "winner": true
+    },
+    {
+      "name": "XGBClassifier",
+      "f1": 0.6164,
+      "recall": 0.7326,
+      "precision": 0.5320,
+      "roc_auc": 0.8279,
+      "weighted_score": 0.6977,
+      "winner": false
+    },
+    {
+      "name": "LGBMClassifier",
+      "f1": 0.6111,
+      "recall": 0.6471,
+      "precision": 0.5789,
+      "roc_auc": 0.8365,
+      "weighted_score": 0.6363,
+      "winner": false
+    },
+    {
+      "name": "RandomForestClassifier",
+      "f1": 0.6016,
+      "recall": 0.6176,
+      "precision": 0.5863,
+      "roc_auc": 0.8331,
+      "weighted_score": 0.6128,
+      "winner": false
+    },
+    {
+      "name": "CatBoostClassifier",
+      "f1": 0.6078,
+      "recall": 0.6070,
+      "precision": 0.6086,
+      "roc_auc": 0.8389,
+      "weighted_score": 0.6073,
+      "winner": false
+    },
+    {
+      "name": "GradientBoostingClassifier",
+      "f1": 0.6040,
+      "recall": 0.6016,
+      "precision": 0.6065,
+      "roc_auc": 0.8393,
+      "weighted_score": 0.6023,
+      "winner": false
+    }
+  ]
+}
