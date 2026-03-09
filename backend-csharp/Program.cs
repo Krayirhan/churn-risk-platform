@@ -15,8 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 // SERVİSLERİ KAYDET
 // ─────────────────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi();
 
 // HTTP Client servisini ekle (Python API'ye bağlanmak için)
 builder.Services.AddHttpClient<PythonApiService>(client =>
@@ -45,8 +44,7 @@ var app = builder.Build();
 // ─────────────────────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
 }
 
 app.UseCors("AllowFrontend");
@@ -56,7 +54,7 @@ app.MapControllers();
 Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║     CHURN RISK PLATFORM - C# BACKEND BAŞLATILDI              ║");
 Console.WriteLine("╠════════════════════════════════════════════════════════════════╣");
-Console.WriteLine("║  Swagger UI: http://localhost:5001/swagger                    ║");
+Console.WriteLine("║  OpenAPI:    http://localhost:5001/openapi/v1.json             ║");
 Console.WriteLine("║  Python API: http://localhost:8000                            ║");
 Console.WriteLine("║  Frontend:   http://localhost:5500                            ║");
 Console.WriteLine("╚════════════════════════════════════════════════════════════════╝");

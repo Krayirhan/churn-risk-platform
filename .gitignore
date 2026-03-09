@@ -70,3 +70,5 @@ test-results.xml
 # ─── C# build outputs ───
 backend-csharp/bin/
 backend-csharp/obj/
+
+*.npz.bak
