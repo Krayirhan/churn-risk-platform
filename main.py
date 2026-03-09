@@ -26,7 +26,7 @@ import argparse
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-from src.logger import logging
+from src.logger import logging  # noqa: E402
 
 
 def cmd_train(args) -> None:

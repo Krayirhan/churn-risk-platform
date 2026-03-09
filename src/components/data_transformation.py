@@ -573,7 +573,7 @@ class DataTransformation:
 
             # ─── ADIM 4b: SMOTE - Class Imbalance Handling ───
             logging.info("Adım 4b/4: SMOTE (Synthetic Minority Over-sampling)...")
-            logging.info(f"  Eğitim seti class dağılımı (SMOTE öncesi):")
+            logging.info("  Eğitim seti class dağılımı (SMOTE öncesi):")
             unique, counts = np.unique(y_train, return_counts=True)
             for u, c in zip(unique, counts):
                 logging.info(f"    Sınıf {u}: {c} örnek ({100*c/len(y_train):.1f}%)")
@@ -582,7 +582,7 @@ class DataTransformation:
             smote = SMOTE(random_state=42, k_neighbors=5)
             X_train_arr, y_train = smote.fit_resample(X_train_arr, y_train)
 
-            logging.info(f"  Eğitim seti class dağılımı (SMOTE sonrası):")
+            logging.info("  Eğitim seti class dağılımı (SMOTE sonrası):")
             unique, counts = np.unique(y_train, return_counts=True)
             for u, c in zip(unique, counts):
                 logging.info(f"    Sınıf {u}: {c} örnek ({100*c/len(y_train):.1f}%)")

@@ -356,7 +356,7 @@ class ModelTrainer:
             
             best_f1_at_threshold = threshold_results.get(best_threshold, (0, 0))[1]
             default_recall = threshold_results.get(0.5, (0, 0))[0]
-            logging.info(f"  Threshold optimizasyonu tamamlandı (Recall odaklı):")
+            logging.info("  Threshold optimizasyonu tamamlandı (Recall odaklı):")
             logging.info(f"    Optimal threshold: {best_threshold:.2f}")
             logging.info(f"    Maksimum Recall: {best_recall:.4f} | F1: {best_f1_at_threshold:.4f}")
             logging.info(f"    Default threshold (0.5) Recall: {default_recall:.4f}")
