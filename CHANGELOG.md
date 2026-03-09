@@ -117,7 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 5 monitoring endpoints: `/monitor/stats`, `/monitor/drift`, `/monitor/health-report`, `/monitor/retrain`, `/monitor/retrain-history`
 
 #### Phase 6 — Quality & Packaging
-- 158 tests, 85% coverage (unit + integration)
+- 158 tests, 75% coverage (unit + integration)
 - `pyproject.toml` — PEP 621 metadata, project URLs, classifiers
 - `MANIFEST.in`, `.readthedocs.yml`
 - `Makefile` with 15+ commands

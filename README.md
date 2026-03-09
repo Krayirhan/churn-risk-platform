@@ -6,7 +6,7 @@ End-to-end machine learning platform for predicting customer churn, serving real
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-158%20passed-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-75%25-yellowgreen.svg)](tests/)
 
 > **Core stack:** Python / FastAPI / scikit-learn / XGBoost. The C# API gateway and frontend dashboard are optional companion layers for enterprise integration and demo purposes.
 
@@ -49,7 +49,7 @@ GridSearchCV + Optuna (5-Fold CV) evaluated **6 algorithms** on 7,043 telecom cu
 - **Data drift monitoring** in production — KS test & PSI statistical methods
 - **Automated retraining** when performance degrades or drift is detected
 - **CI/CD pipeline** — lint, test, Docker build, container registry push, GitHub Release
-- **158 tests, 85% coverage** — unit + integration with pytest
+- **158 tests, 75% coverage** — unit + integration with pytest
 - **Interactive frontend dashboard** — real-time system status, model metrics, comparison table, prediction form
 
 ---
@@ -354,7 +354,7 @@ curl -X POST http://localhost:8000/monitor/retrain?force=true  # Force retrainin
 
 ```
 churn-risk-platform/
-├── app.py                          # FastAPI REST API (10 endpoints)
+├── app.py                          # FastAPI REST API (11 endpoints)
 ├── main.py                         # CLI entry point (train/predict/serve/monitor)
 ├── Makefile                        # Task automation (make train, test, lint, serve)
 ├── pyproject.toml                  # PEP 621 metadata + tool config
@@ -380,7 +380,7 @@ churn-risk-platform/
 │
 ├── configs/                        # All behavior is config-driven (YAML)
 │   ├── config.yaml                 #   Paths, split ratio, target column
-│   ├── model_params.yaml           #   Hyperparameter grids (4 algorithms)
+│   ├── model_params.yaml           #   Hyperparameter grids (6 algorithms)
 │   ├── monitoring.yaml             #   Drift thresholds, retrain triggers
 │   └── processing.yaml             #   Column types, scaling, encoding
 │
@@ -410,15 +410,15 @@ make test-cov       # With coverage report
 
 | Module | Tests | Coverage |
 |--------|------:|----------|
-| Data Ingestion | 15 | 92% |
-| Data Transformation | 18 | 88% |
-| Model Trainer | 20 | 85% |
-| Model Evaluation | 12 | 90% |
-| Predict Pipeline | 15 | 89% |
-| Drift Detector | 18 | 86% |
-| API (app.py) | 20 | 82% |
+| Data Ingestion | 15 | 77% |
+| Data Transformation | 18 | 91% |
+| Model Trainer | 20 | 59% |
+| Model Evaluation | 12 | 96% |
+| Predict Pipeline | 15 | 62% |
+| Drift Detector | 18 | 92% |
+| API (app.py) | 20 | 61% |
 | Integration | 10 | — |
-| **Total** | **158** | **85%** |
+| **Total** | **158** | **75%** |
 
 ---
 
@@ -462,7 +462,7 @@ All behavior is controlled via YAML — no hardcoded values.
 - [x] C# API Gateway + Frontend Dashboard
 - [x] Dynamic model comparison table in frontend
 - [x] Recall-optimized threshold (0.40) via threshold sweep
-- [x] 158 tests, 85% coverage
+- [x] 158 tests, 75% coverage
 - [x] Security: API key auth, rate limiting, CORS
 - [ ] SHAP values for per-prediction explanations
 - [ ] Real-time drift dashboard (Grafana)
