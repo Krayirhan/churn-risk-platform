@@ -84,65 +84,90 @@ async function checkSystemHealth() {
         showError('Sistem bağlantı hatası. Lütfen backend servislerin çalıştığından emin olun.');
         
         // Hata durumunda UI'ı güncelle
-        document.getElementById('modelStatus').innerHTML = 
-            '<span style="color: var(--danger-color);">❌ Bağlantı Yok</span>';
+        const _s = document.getElementById('serviceStatus');
+        if (_s) { _s.textContent = 'Çevrimdışı'; _s.style.color = 'var(--danger-color)'; }
+        const _d = document.getElementById('serviceDetail');
+        if (_d) _d.textContent = 'Backend servislere ulaşılamıyor';
+        const _bg = document.getElementById('serviceIconBg');
+        if (_bg) { _bg.className = 'stat-icon'; _bg.style.background = 'var(--danger-color)'; }
+        const _ic = document.getElementById('serviceIcon');
+        if (_ic) _ic.className = 'fas fa-times-circle';
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SAĞLIK DURUMU GÜNCELLEMESİ
+// KART 1: SERVİS DURUMU — "Sistem açık mı?"
 // ─────────────────────────────────────────────────────────────────────────────
 function updateHealthStatus(data) {
-    const statusElement = document.getElementById('modelStatus');
-    const updateElement = document.getElementById('lastUpdate');
-    
-    if (data.status === 'healthy' || data.modelLoaded) {
-        statusElement.innerHTML = '✅ Aktif ve Hazır';
-        statusElement.style.color = 'var(--success-color)';
+    const statusEl = document.getElementById('serviceStatus');
+    const detailEl = document.getElementById('serviceDetail');
+    const iconBgEl = document.getElementById('serviceIconBg');
+    const iconEl   = document.getElementById('serviceIcon');
+    const updateEl = document.getElementById('lastUpdate');
+
+    const healthy = data.status === 'healthy' || data.modelLoaded;
+    if (healthy) {
+        statusEl.textContent  = 'Aktif';
+        statusEl.style.color  = 'var(--success-color)';
+        detailEl.textContent  = 'Python API • Model • Preprocessor hazır';
+        if (iconBgEl) iconBgEl.className = 'stat-icon green';
+        if (iconEl)   iconEl.className   = 'fas fa-check-circle';
     } else {
-        statusElement.innerHTML = '⚠️ Model Yüklenmedi';
-        statusElement.style.color = 'var(--warning-color)';
+        statusEl.textContent  = 'Hata';
+        statusEl.style.color  = 'var(--danger-color)';
+        detailEl.textContent  = 'Model veya preprocessor yüklenemedi';
+        if (iconBgEl) { iconBgEl.className = 'stat-icon'; iconBgEl.style.background = 'var(--danger-color)'; }
+        if (iconEl)   iconEl.className = 'fas fa-times-circle';
     }
-    
-    const now = new Date();
-    updateElement.textContent = now.toLocaleTimeString('tr-TR');
+    if (updateEl) updateEl.textContent = new Date().toLocaleTimeString('tr-TR');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MODEL BİLGİLERİ GÜNCELLEMESİ
+// KART 2: CHURN RECALL — "Model ne kadar iyi?" (ana KPİ)
 // ─────────────────────────────────────────────────────────────────────────────
 function updateModelInfo(data) {
-    const accuracyValue = data?.metrics?.accuracy ?? data?.accuracy;
-    const recallValue = data?.recall ?? data?.metrics?.recall;
+    // Recall — ana KPİ: churn müşterileri kaçını yakalıyoruz?
+    const recall = data?.recall ?? data?.metrics?.recall;
+    if (typeof recall === 'number')
+        document.getElementById('modelRecall').textContent = `%${(recall * 100).toFixed(1)}`;
 
-    // Büyük rakam: Recall (modelin optimize edildiği ana metrik)
-    if (typeof recallValue === 'number') {
-        document.getElementById('modelRecall').textContent = `%${(recallValue * 100).toFixed(1)}`;
-    }
-    // Küçük etiket: Accuracy (ikincil bilgi)
-    if (typeof accuracyValue === 'number') {
-        document.getElementById('modelAccuracy').textContent = `%${(accuracyValue * 100).toFixed(2)}`;
-    }
-    // Model adını dinamik güncelle
+    // AUC — modelin ayırt etme gücü (0.5 = rastgele, 1.0 = mükemmel)
+    const auc = data?.roc_auc ?? data?.rocAuc ?? data?.metrics?.roc_auc;
+    if (typeof auc === 'number')
+        document.getElementById('modelAuc').textContent = auc.toFixed(4);
+
+    // F1 — precision/recall dengesi
+    const f1 = data?.f1 ?? data?.metrics?.f1;
+    if (typeof f1 === 'number')
+        document.getElementById('modelF1').textContent = f1.toFixed(4);
+
+    // Accuracy — genel doğruluk (imbalanced veri için yanıltıcı olabilir)
+    const accuracy = data?.accuracy ?? data?.metrics?.accuracy;
+    if (typeof accuracy === 'number')
+        document.getElementById('modelAccuracy').textContent = `%${(accuracy * 100).toFixed(2)}`;
+
+    // Model adı
     const modelName = data?.model_name ?? data?.modelName ?? data?.metrics?.model_name;
-    if (modelName) {
+    if (modelName)
         document.getElementById('activeModelName').textContent = modelName;
-    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DRIFT DURUMU GÜNCELLEMESİ
+// KART 3: VERİ DRİFT — "Veri kayması var mı?"
 // ─────────────────────────────────────────────────────────────────────────────
 function updateDriftStatus(data) {
-    const driftElement = document.getElementById('driftStatus');
+    const driftEl  = document.getElementById('driftStatus');
+    const iconBgEl = document.getElementById('driftIconBg');
 
     const driftDetected = data?.driftDetected ?? data?.drift_detected;
     if (driftDetected) {
-        driftElement.innerHTML = '⚠️ Drift Tespit Edildi';
-        driftElement.style.color = 'var(--warning-color)';
+        driftEl.textContent  = 'Drift Var';
+        driftEl.style.color  = 'var(--danger-color)';
+        if (iconBgEl) { iconBgEl.className = 'stat-icon'; iconBgEl.style.background = 'var(--danger-color)'; }
     } else {
-        driftElement.innerHTML = '✅ Normal';
-        driftElement.style.color = 'var(--success-color)';
+        driftEl.textContent  = 'Normal';
+        driftEl.style.color  = 'var(--success-color)';
+        if (iconBgEl) iconBgEl.className = 'stat-icon orange';
     }
 }
 

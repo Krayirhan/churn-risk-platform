@@ -36,53 +36,65 @@
             <section class="stats-section">
                 <h2 class="section-title">Sistem Durumu</h2>
                 <div class="stats-grid">
+
+                    <!-- KART 1: Servis sağlığı — "Sistem açık mı?" -->
                     <div class="stat-card">
-                        <div class="stat-icon green">
-                            <i class="fas fa-check-circle"></i>
+                        <div class="stat-icon green" id="serviceIconBg">
+                            <i class="fas fa-server" id="serviceIcon"></i>
                         </div>
                         <div class="stat-info">
-                            <h3 class="stat-title">Model Durumu</h3>
-                            <p class="stat-value" id="modelStatus">Yükleniyor...</p>
-                            <span class="stat-label">Son Güncelleme: <span id="lastUpdate">-</span></span>
+                            <h3 class="stat-title">Servis Durumu</h3>
+                            <p class="stat-value" id="serviceStatus" style="font-size:1.6rem;">Yükleniyor...</p>
+                            <span class="stat-label" id="serviceDetail">Bağlantı kontrol ediliyor...</span>
+                            <br><span class="stat-label" style="opacity:0.7;">Son kontrol: <span id="lastUpdate">-</span></span>
                         </div>
                     </div>
 
+                    <!-- KART 2: Churn Recall — "Model ne kadar iyi?" (ana KPİ) -->
                     <div class="stat-card">
                         <div class="stat-icon blue">
-                            <i class="fas fa-brain"></i>
+                            <i class="fas fa-crosshairs"></i>
                         </div>
                         <div class="stat-info">
-                            <h3 class="stat-title">Churn Recall <small style="font-weight:400;font-size:0.7rem;color:#94a3b8;">(Ana Metrik)</small></h3>
-                            <p class="stat-value" id="modelRecall">%0.0</p>
+                            <h3 class="stat-title">Churn Recall
+                                <small style="font-weight:400;font-size:0.65rem;color:#94a3b8;display:block;margin-top:2px;">Churn müşterileri yakalama oranı</small>
+                            </h3>
+                            <p class="stat-value" id="modelRecall" style="color:#2563eb;">-</p>
                             <span class="stat-label">
-                                Aktif Model: <span id="activeModelName">Yükleniyor...</span>
+                                AUC: <strong id="modelAuc">-</strong>
                                 &nbsp;&middot;&nbsp;
-                                Accuracy: <span id="modelAccuracy">-</span>
+                                F1: <strong id="modelF1">-</strong>
+                                &nbsp;&middot;&nbsp;
+                                Accuracy: <strong id="modelAccuracy">-</strong>
                             </span>
+                            <br><span class="stat-label" style="opacity:0.7;">Model: <span id="activeModelName">Yükleniyor...</span></span>
                         </div>
                     </div>
 
+                    <!-- KART 3: Drift — "Veri kayması var mı?" -->
                     <div class="stat-card">
-                        <div class="stat-icon orange">
-                            <i class="fas fa-exclamation-triangle"></i>
+                        <div class="stat-icon orange" id="driftIconBg">
+                            <i class="fas fa-wave-square"></i>
                         </div>
                         <div class="stat-info">
-                            <h3 class="stat-title">Drift Durumu</h3>
-                            <p class="stat-value" id="driftStatus">Kontrol ediliyor...</p>
-                            <span class="stat-label">Veri kalitesi takibi</span>
+                            <h3 class="stat-title">Veri Drift</h3>
+                            <p class="stat-value" id="driftStatus" style="font-size:1.6rem;">Kontrol ediliyor...</p>
+                            <span class="stat-label">Gelen verinin dağılım kayması</span>
                         </div>
                     </div>
 
+                    <!-- KART 4: Tahmin sayısı — "Ne kadar kullanıldı?" -->
                     <div class="stat-card">
                         <div class="stat-icon purple">
-                            <i class="fas fa-users"></i>
+                            <i class="fas fa-chart-bar"></i>
                         </div>
                         <div class="stat-info">
-                            <h3 class="stat-title">Bugün Tahmin</h3>
+                            <h3 class="stat-title">Tahmin Yapıldı</h3>
                             <p class="stat-value" id="todayPredictions">0</p>
-                            <span class="stat-label">Toplam analiz edilen müşteri</span>
+                            <span class="stat-label">Bu oturumda analiz edilen müşteri</span>
                         </div>
                     </div>
+
                 </div>
             </section>
             <!-- MODEL KARŞILAŞTIRMASI -->
