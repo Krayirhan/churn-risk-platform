@@ -56,6 +56,9 @@ data/external/
 Thumbs.db
 desktop.ini
 
+# ─── Temp utility scripts ───
+_*.py
+
 # ─── pytest & coverage ───
 .pytest_cache/
 htmlcov/
@@ -67,3 +70,7 @@ test-results.xml
 dist/
 build/
 *.egg-info/
+
+# ─── C# build outputs ───
+backend-csharp/bin/
+backend-csharp/obj/

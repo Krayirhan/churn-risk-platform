@@ -385,7 +385,10 @@ class DataTransformation:
             #    çıkarma yapılamaz, bu yüzden with_mean=False.
             cat_pipeline = Pipeline(steps=[
                 ("imputer", SimpleImputer(strategy=self.config.cat_impute_strategy)),
-                ("onehot", OneHotEncoder(handle_unknown=self.config.handle_unknown)),
+                ("onehot", OneHotEncoder(
+                    handle_unknown=self.config.handle_unknown,
+                    drop='first'  # İlk kategoriyi drop et (multicollinearity önlemi)
+                )),
                 ("scaler", StandardScaler(with_mean=False))
             ])
 

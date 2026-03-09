@@ -107,6 +107,7 @@ class CustomData:
           - API'den gelen JSON'da fazladan alanlar olabilir (örn: timestamp).
           - @dataclass bunları kabul etmez ve hata fırlatır.
           - Bu metod sadece tanımlı alanları alır, kalanını yok sayar.
+          - Case-insensitive matching yapar (Gender → gender, Tenure → tenure)
 
         Args:
             data: Müşteri bilgilerini içeren dict (API body)
@@ -115,7 +116,13 @@ class CustomData:
             CustomData nesnesi
         """
         valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
-        filtered = {k: v for k, v in data.items() if k in valid_fields}
+        # Case-insensitive field matching
+        field_map = {f.lower(): f for f in valid_fields}
+        filtered = {}
+        for k, v in data.items():
+            k_lower = k.lower()
+            if k_lower in field_map:
+                filtered[field_map[k_lower]] = v
         return cls(**filtered)
 
 

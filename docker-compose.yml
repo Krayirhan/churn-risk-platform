@@ -1,67 +1,76 @@
-# ============================================================================
-# docker-compose.yml — Yerel Geliştirme ve Production Orkestrasyon
-# ============================================================================
-# NEDEN BU DOSYA?
-#   Tek komutla tüm servisleri ayağa kaldırır:
-#     docker-compose up --build          → API servisi
-#     docker-compose --profile train up   → Eğitim çalıştır
-#     docker-compose down                 → Temizle
-#
-# VOLUME MOUNT'LAR:
-#   - artifacts/  → Model ve preprocessor dosyaları (kalıcı)
-#   - data/raw/   → Eğitim verisi (host'tan mount)
-#   - logs/       → Log dosyaları (kalıcı)
-# ============================================================================
+version: '3.8'
 
 services:
-
-  # ────────────────────────────────────────────────────────────
-  # API Servisi — FastAPI + Uvicorn
-  # ────────────────────────────────────────────────────────────
-  api:
+  # Python ML Backend
+  python-backend:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: churn-api
+      dockerfile: Dockerfile.python
+    container_name: churn-python-backend
     ports:
       - "8000:8000"
     volumes:
-      - ./artifacts:/app/artifacts        # Model dosyaları (kalıcı)
-      - ./data/raw:/app/data/raw:ro       # Eğitim verisi (read-only)
-      - ./logs:/app/logs                  # Log çıktıları
-    environment:
-      - PYTHONUNBUFFERED=1                # Log'lar anında stdout'a yazsın
-      - UVICORN_WORKERS=2
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    networks:
-      - churn-net
-
-  # ────────────────────────────────────────────────────────────
-  # Eğitim Servisi — Tek seferlik model eğitimi
-  # ────────────────────────────────────────────────────────────
-  train:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: churn-train
-    command: ["python", "main.py", "--train"]
-    volumes:
-      - ./artifacts:/app/artifacts        # Üretilen model burada kalır
-      - ./data/raw:/app/data/raw:ro       # Eğitim verisi
-      - ./logs:/app/logs
+      - ./artifacts:/app/artifacts
+      - ./src:/app/src
+      - ./configs:/app/configs
+      - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
-    profiles:
-      - train                             # Sadece --profile train ile çalışır
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
-      - churn-net
+      - churn-network
+
+  # C# API Gateway
+  csharp-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.csharp
+    container_name: churn-csharp-backend
+    ports:
+      - "5001:5001"
+    depends_on:
+      python-backend:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5001
+      - PythonAPI__BaseUrl=http://python-backend:8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/churn/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - churn-network
+
+  # Frontend Dashboard
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: churn-frontend
+    ports:
+      - "5500:5500"
+    depends_on:
+      - csharp-backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5500/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - churn-network
 
 networks:
-  churn-net:
+  churn-network:
     driver: bridge

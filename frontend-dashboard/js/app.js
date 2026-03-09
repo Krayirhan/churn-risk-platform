@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('predictionForm');
     form.addEventListener('submit', handlePrediction);
     
+    // Rastgele örnek butonu
+    const randomBtn = document.getElementById('randomExampleBtn');
+    if (randomBtn) {
+        randomBtn.addEventListener('click', generateRandomExample);
+    }
+    
     // Her 30 saniyede bir sistem durumunu güncelle
     setInterval(checkSystemHealth, 30000);
 });
@@ -309,6 +315,87 @@ function incrementTodayPredictions() {
 function resetForm() {
     document.getElementById('predictionForm').reset();
     document.getElementById('resultSection').style.display = 'none';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RASTGELE ÖRNEK OLUŞTURUCU
+// ─────────────────────────────────────────────────────────────────────────────
+function generateRandomExample() {
+    const randomData = {
+        gender: Math.random() > 0.5 ? 'Male' : 'Female',
+        seniorCitizen: Math.random() > 0.8 ? '1' : '0',
+        partner: Math.random() > 0.5 ? 'Yes' : 'No',
+        dependents: Math.random() > 0.3 ? 'No' : 'Yes',
+        tenure: Math.floor(Math.random() * 72) + 1,
+        phoneService: Math.random() > 0.1 ? 'Yes' : 'No',
+        multipleLines: ['No', 'Yes', 'No phone service'][Math.floor(Math.random() * 3)],
+        internetService: ['DSL', 'Fiber optic', 'No'][Math.floor(Math.random() * 3)],
+        onlineSecurity: ['No', 'Yes', 'No internet service'][Math.floor(Math.random() * 3)],
+        onlineBackup: ['No', 'Yes', 'No internet service'][Math.floor(Math.random() * 3)],
+        deviceProtection: ['No', 'Yes', 'No internet service'][Math.floor(Math.random() * 3)],
+        techSupport: ['No', 'Yes', 'No internet service'][Math.floor(Math.random() * 3)],
+        streamingTV: ['No', 'Yes', 'No internet service'][Math.floor(Math.random() * 3)],
+        streamingMovies: ['No', 'Yes', 'No internet service'][Math.floor(Math.random() * 3)],
+        contract: ['Month-to-month', 'One year', 'Two year'][Math.floor(Math.random() * 3)],
+        paperlessBilling: Math.random() > 0.4 ? 'Yes' : 'No',
+        paymentMethod: ['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'][Math.floor(Math.random() * 4)],
+        monthlyCharges: (Math.random() * 100 + 20).toFixed(2),
+        totalCharges: (Math.random() * 8000 + 100).toFixed(2)
+    };
+
+    // Form alanlarını doldur
+    document.getElementById('gender').value = randomData.gender;
+    document.getElementById('seniorCitizen').value = randomData.seniorCitizen;
+    document.getElementById('partner').value = randomData.partner;
+    document.getElementById('dependents').value = randomData.dependents;
+    document.getElementById('tenure').value = randomData.tenure;
+    document.getElementById('phoneService').value = randomData.phoneService;
+    document.getElementById('multipleLines').value = randomData.multipleLines;
+    document.getElementById('internetService').value = randomData.internetService;
+    document.getElementById('onlineSecurity').value = randomData.onlineSecurity;
+    document.getElementById('onlineBackup').value = randomData.onlineBackup;
+    document.getElementById('deviceProtection').value = randomData.deviceProtection;
+    document.getElementById('techSupport').value = randomData.techSupport;
+    document.getElementById('streamingTV').value = randomData.streamingTV;
+    document.getElementById('streamingMovies').value = randomData.streamingMovies;
+    document.getElementById('contract').value = randomData.contract;
+    document.getElementById('paperlessBilling').value = randomData.paperlessBilling;
+    document.getElementById('paymentMethod').value = randomData.paymentMethod;
+    document.getElementById('monthlyCharges').value = randomData.monthlyCharges;
+    document.getElementById('totalCharges').value = randomData.totalCharges;
+
+    // Başarı mesajı göster
+    showNotification('🎲 Rastgele örnek oluşturuldu!', 'success');
+}
+
+// Bildirim gösterme fonksiyonu
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#27ae60' : '#3498db'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

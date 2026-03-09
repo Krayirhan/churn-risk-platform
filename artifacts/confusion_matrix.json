@@ -1,25 +1,25 @@
 {
-  "true_negative": 28,
-  "false_positive": 4,
-  "false_negative": 7,
-  "true_positive": 1,
-  "tn_rate": 0.7,
-  "fp_rate": 0.1,
-  "fn_rate": 0.175,
-  "tp_rate": 0.025,
+  "true_negative": 762,
+  "false_positive": 273,
+  "false_negative": 75,
+  "true_positive": 299,
+  "tn_rate": 0.5408,
+  "fp_rate": 0.1938,
+  "fn_rate": 0.0532,
+  "tp_rate": 0.2122,
   "matrix": [
     [
-      28,
-      4
+      762,
+      273
     ],
     [
-      7,
-      1
+      75,
+      299
     ]
   ],
-  "total_samples": 40,
-  "total_actual_churn": 8,
-  "total_actual_no_churn": 32,
-  "total_predicted_churn": 5,
-  "total_predicted_no_churn": 35
+  "total_samples": 1409,
+  "total_actual_churn": 374,
+  "total_actual_no_churn": 1035,
+  "total_predicted_churn": 572,
+  "total_predicted_no_churn": 837
 }
