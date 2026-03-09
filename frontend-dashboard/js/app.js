@@ -113,9 +113,15 @@ function updateHealthStatus(data) {
 // ─────────────────────────────────────────────────────────────────────────────
 function updateModelInfo(data) {
     const accuracyValue = data?.metrics?.accuracy ?? data?.accuracy;
+    const recallValue = data?.recall ?? data?.metrics?.recall;
+
+    // Büyük rakam: Recall (modelin optimize edildiği ana metrik)
+    if (typeof recallValue === 'number') {
+        document.getElementById('modelRecall').textContent = `%${(recallValue * 100).toFixed(1)}`;
+    }
+    // Küçük etiket: Accuracy (ikincil bilgi)
     if (typeof accuracyValue === 'number') {
-        const accuracy = (accuracyValue * 100).toFixed(2);
-        document.getElementById('modelAccuracy').textContent = `%${accuracy}`;
+        document.getElementById('modelAccuracy').textContent = `%${(accuracyValue * 100).toFixed(2)}`;
     }
     // Model adını dinamik güncelle
     const modelName = data?.model_name ?? data?.modelName ?? data?.metrics?.model_name;
