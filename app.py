@@ -196,7 +196,7 @@ class PredictionOutput(BaseModel):
     """
     prediction: int = Field(description="Tahmin: 0=Kalacak, 1=Churn")
     churn_probability: float = Field(description="Churn olasılığı (0.0–1.0)")
-    confidence: float = Field(description="Modelin tahmine güveni: max(P(churn), P(no-churn)) (0.0–1.0)")
+    confidence: float = Field(default=0.0, description="Modelin tahmine güveni: max(P(churn), P(no-churn)) (0.0–1.0)")
     risk_level: str = Field(description="Risk seviyesi: Düşük / Orta / Yüksek")
     customerID: str = Field(description="Müşteri kimliği")
     model_version: str = Field(default="v1.0", description="Model adı ve versiyonu")
