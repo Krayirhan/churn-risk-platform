@@ -48,7 +48,6 @@ data/
 # ─── Model artifacts (volume ile mount edilmeli) ───
 artifacts/*.pkl
 artifacts/*.npz
-models/
 
 # ─── Docker (kendini dahil etme) ───
 Dockerfile

@@ -36,7 +36,6 @@ logs/
 # ─── Model Artifacts (büyük dosyalar — DVC ile yönetilmeli) ───
 artifacts/*.pkl
 artifacts/*.npz
-models/*.pkl
 
 # ─── Notebook Artifacts (büyük matrisler) ───
 notebooks/artifacts/*.npz

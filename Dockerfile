@@ -66,7 +66,7 @@ RUN pip install --upgrade pip && \
     rm -rf /wheels
 
 # Artifact ve data dizinlerini oluştur (volume mount noktaları)
-RUN mkdir -p artifacts data/raw logs models && \
+RUN mkdir -p artifacts data/raw logs && \
     chown -R appuser:appuser /app
 
 # Root olmayan kullanıcıya geç

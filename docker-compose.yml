@@ -5,20 +5,19 @@ services:
   python-backend:
     build:
       context: .
-      dockerfile: Dockerfile.python
+      dockerfile: Dockerfile
     container_name: churn-python-backend
     ports:
       - "8000:8000"
     volumes:
       - ./artifacts:/app/artifacts
-      - ./src:/app/src
       - ./configs:/app/configs
       - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -43,7 +42,7 @@ services:
       - PythonAPI__BaseUrl=http://python-backend:8000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/api/churn/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/api/churn/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -63,7 +62,7 @@ services:
       - csharp-backend
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5500/"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5500/')"]
       interval: 30s
       timeout: 10s
       retries: 3
