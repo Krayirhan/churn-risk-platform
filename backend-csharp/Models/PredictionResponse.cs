@@ -19,11 +19,17 @@ public class PredictionResponse
     [JsonProperty("churn_probability")]
     public double ChurnProbability { get; set; }
 
+    [JsonProperty("confidence")]
+    public double Confidence { get; set; }
+
     [JsonProperty("risk_level")]
     public string RiskLevel { get; set; } = string.Empty;
 
     [JsonProperty("customerID")]
     public string CustomerId { get; set; } = string.Empty;
+
+    [JsonProperty("model_version")]
+    public string ModelVersion { get; set; } = string.Empty;
 }
 
 /// <summary>

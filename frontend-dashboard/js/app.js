@@ -272,9 +272,8 @@ function displayResult(result) {
     
     // Detaylı bilgileri göster
     const churnProbability = result.churnProbability ?? result.churn_probability ?? 0;
-    const confidenceRaw = result.confidence ?? churnProbability;
+    const retentionProbability = ((1 - churnProbability) * 100).toFixed(1);  // Kalma olasılığı
     const probability = (churnProbability * 100).toFixed(1);
-    const confidence = (confidenceRaw * 100).toFixed(1);
     const modelVersion = result.modelVersion ?? result.model_version ?? 'N/A';
     
     resultDetails.innerHTML = `
@@ -287,11 +286,11 @@ function displayResult(result) {
             <p>${translateRiskLevel(riskLevelRaw)}</p>
         </div>
         <div class="detail-item">
-            <h4>Güven Skoru</h4>
-            <p>${confidence}%</p>
+            <h4>Kalma Olasılığı</h4>
+            <p>${retentionProbability}%</p>
         </div>
         <div class="detail-item">
-            <h4>Model Versiyonu</h4>
+            <h4>Model</h4>
             <p>${modelVersion}</p>
         </div>
     `;

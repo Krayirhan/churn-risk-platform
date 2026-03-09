@@ -196,8 +196,10 @@ class PredictionOutput(BaseModel):
     """
     prediction: int = Field(description="Tahmin: 0=Kalacak, 1=Churn")
     churn_probability: float = Field(description="Churn olasılığı (0.0–1.0)")
+    confidence: float = Field(description="Modelin tahmine güveni: max(P(churn), P(no-churn)) (0.0–1.0)")
     risk_level: str = Field(description="Risk seviyesi: Düşük / Orta / Yüksek")
     customerID: str = Field(description="Müşteri kimliği")
+    model_version: str = Field(default="v1.0", description="Model adı ve versiyonu")
 
 
 class BatchInput(BaseModel):
@@ -418,6 +420,22 @@ async def predict_single(customer: CustomerInput):
         pipeline = get_pipeline()
         input_data = customer.model_dump()
         result = pipeline.predict(input_data)
+
+        # ─── Güven Skoru: max(P(churn), P(no-churn)) ───
+        # Modelin tahmine ne kadar emin olduğunu gösterir.
+        # Örn: P(churn)=0.76 → güven=0.76 (churn'den emin)
+        # Örn: P(churn)=0.30 → güven=0.70 (kalmaktan emin)
+        churn_p = result["churn_probability"]
+        result["confidence"] = round(max(churn_p, 1.0 - churn_p), 4)
+
+        # ─── Model Versiyonu: metrics.json'dan model adını oku ───
+        try:
+            from src.utils.common import load_json
+            _m = load_json("artifacts/metrics.json")
+            _model_name = _m.get("model_name", "Model")
+            result["model_version"] = f"{_model_name} v1.0"
+        except Exception:
+            result["model_version"] = "v1.0"
 
         # ─── Tahmin Loglama ───
         try:
