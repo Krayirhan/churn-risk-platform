@@ -34,7 +34,7 @@ from collections import defaultdict
 from fastapi import FastAPI, HTTPException, Security, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from starlette.responses import JSONResponse
 
 from src.logger import logging
@@ -156,6 +156,18 @@ class CustomerInput(BaseModel):
         default="API_USER",
         description="Müşteri kimliği (opsiyonel, izleme amaçlı)"
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_keys(cls, data):
+        """C#/camelCase/PascalCase gibi farklı kaynaklardan gelen
+        JSON anahtarlarını Pydantic field adlarıyla eşleştirir.
+        Örn: 'Tenure' → 'tenure', 'gender' → 'gender', 'seniorCitizen' → 'SeniorCitizen'
+        """
+        if not isinstance(data, dict):
+            return data
+        field_map = {f.lower(): f for f in cls.model_fields}
+        return {field_map.get(k.lower(), k): v for k, v in data.items()}
 
     model_config = {
         "json_schema_extra": {
