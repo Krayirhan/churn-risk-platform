@@ -538,6 +538,7 @@ class ModelTrainer:
                         "recall": round(m["test_recall"], 4),
                         "precision": round(m["test_precision"], 4),
                         "roc_auc": round(m.get("test_roc_auc", 0), 4),
+                        "accuracy": round(m.get("test_accuracy", 0), 4),
                         "weighted_score": round(model_scores[name], 4),
                         "winner": name == best_model_name
                     }

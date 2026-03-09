@@ -200,12 +200,14 @@ async function loadModelComparison() {
                 ? ' <span style="background:#10b981;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:99px;vertical-align:middle;">KAZANAN</span>'
                 : '';
             const rowStyle = m.winner ? 'background:#f0fdf4;font-weight:600;' : '';
+            const accStr = (typeof m.accuracy === 'number') ? `${(m.accuracy * 100).toFixed(2)}%` : '-';
             return `<tr style="${rowStyle}">
                 <td style="padding:10px 12px;">${m.name}${winnerBadge}</td>
                 <td style="padding:10px 12px;text-align:center;">${((m.recall ?? 0) * 100).toFixed(1)}%</td>
                 <td style="padding:10px 12px;text-align:center;">${(m.f1 ?? 0).toFixed(4)}</td>
                 <td style="padding:10px 12px;text-align:center;">${((m.precision ?? 0) * 100).toFixed(1)}%</td>
                 <td style="padding:10px 12px;text-align:center;">${(m.roc_auc ?? 0).toFixed(4)}</td>
+                <td style="padding:10px 12px;text-align:center;">${accStr}</td>
                 <td style="padding:10px 12px;text-align:center;color:#2563eb;font-weight:600;">${(m.weighted_score ?? 0).toFixed(4)}</td>
             </tr>`;
         }).join('');
@@ -219,6 +221,7 @@ async function loadModelComparison() {
                         <th style="padding:10px 12px;text-align:center;">F1</th>
                         <th style="padding:10px 12px;text-align:center;">Precision</th>
                         <th style="padding:10px 12px;text-align:center;">ROC-AUC</th>
+                        <th style="padding:10px 12px;text-align:center;">Accuracy</th>
                         <th style="padding:10px 12px;text-align:center;">Ağırlıklı Skor ★</th>
                     </tr>
                 </thead>

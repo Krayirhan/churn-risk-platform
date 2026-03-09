@@ -10,16 +10,18 @@
       "precision": 0.4975,
       "roc_auc": 0.8453,
       "weighted_score": 0.7457,
-      "winner": true
+      "winner": true,
+      "accuracy": 0.7324
     },
     {
       "name": "XGBClassifier",
       "f1": 0.6164,
       "recall": 0.7326,
-      "precision": 0.5320,
+      "precision": 0.532,
       "roc_auc": 0.8279,
       "weighted_score": 0.6977,
-      "winner": false
+      "winner": false,
+      "accuracy": null
     },
     {
       "name": "LGBMClassifier",
@@ -28,7 +30,8 @@
       "precision": 0.5789,
       "roc_auc": 0.8365,
       "weighted_score": 0.6363,
-      "winner": false
+      "winner": false,
+      "accuracy": null
     },
     {
       "name": "RandomForestClassifier",
@@ -37,25 +40,28 @@
       "precision": 0.5863,
       "roc_auc": 0.8331,
       "weighted_score": 0.6128,
-      "winner": false
+      "winner": false,
+      "accuracy": null
     },
     {
       "name": "CatBoostClassifier",
       "f1": 0.6078,
-      "recall": 0.6070,
+      "recall": 0.607,
       "precision": 0.6086,
       "roc_auc": 0.8389,
       "weighted_score": 0.6073,
-      "winner": false
+      "winner": false,
+      "accuracy": null
     },
     {
       "name": "GradientBoostingClassifier",
-      "f1": 0.6040,
+      "f1": 0.604,
       "recall": 0.6016,
       "precision": 0.6065,
       "roc_auc": 0.8393,
       "weighted_score": 0.6023,
-      "winner": false
+      "winner": false,
+      "accuracy": null
     }
   ]
 }
