@@ -31,6 +31,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from imblearn.over_sampling import SMOTE
 
 from src.exception import CustomException
 from src.logger import logging
@@ -475,6 +476,25 @@ class DataTransformation:
                 X_train_arr = X_train_arr.toarray()
             if hasattr(X_test_arr, "toarray"):
                 X_test_arr = X_test_arr.toarray()
+
+            logging.info(f"  Train matris: {X_train_arr.shape} | Test matris: {X_test_arr.shape}")
+
+            # ─── ADIM 4b: SMOTE - Class Imbalance Handling ───
+            logging.info("Adım 4b/4: SMOTE (Synthetic Minority Over-sampling)...")
+            logging.info(f"  Eğitim seti class dağılımı (SMOTE öncesi):")
+            unique, counts = np.unique(y_train, return_counts=True)
+            for u, c in zip(unique, counts):
+                logging.info(f"    Sınıf {u}: {c} örnek ({100*c/len(y_train):.1f}%)")
+
+            # SMOTE: Azınlık sınıfını (Churn=1) sentetik örnekler üretip dengele
+            smote = SMOTE(random_state=42, k_neighbors=5)
+            X_train_arr, y_train = smote.fit_resample(X_train_arr, y_train)
+
+            logging.info(f"  Eğitim seti class dağılımı (SMOTE sonrası):")
+            unique, counts = np.unique(y_train, return_counts=True)
+            for u, c in zip(unique, counts):
+                logging.info(f"    Sınıf {u}: {c} örnek ({100*c/len(y_train):.1f}%)")
+            logging.info(f"  SMOTE sonrası train matris: {X_train_arr.shape}")
 
             logging.info(f"  Train matris: {X_train_arr.shape} | Test matris: {X_test_arr.shape}")
 

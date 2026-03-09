@@ -161,6 +161,56 @@ class ModelTrainer:
             logging.warning(f"model_params.yaml okunamadı, varsayılan parametrelerle devam ediliyor: {e}")
             return {}
 
+    def _optimize_threshold(self, model, X_test: np.ndarray, y_test: np.ndarray) -> tuple:
+        """
+        Optimal decision threshold'u bulur (F1'i maksimize eden).
+        
+        NEDEN GEREKLİ?
+          - Default threshold = 0.5 her zaman optimal değildir.
+          - Imbalanced data'da azınlık sınıfını daha iyi yakalaması için
+            threshold'ü 0.5'in altına çekmemiz gerekebilir.
+          - Bu fonksiyon 0.1-0.9 arasında grid arama yapıp F1'i maksimize
+            eden threshold'u döndürür.
+        
+        Args:
+            model: Eğitilmiş model (predict_proba desteklemeli)
+            X_test: Test features
+            y_test: Test labels
+        
+        Returns:
+            (optimal_threshold, max_f1)
+        """
+        from sklearn.metrics import f1_score
+        
+        try:
+            # Olasılık tahminlerini al
+            y_proba = model.predict_proba(X_test)[:, 1]  # P(Churn=1)
+            
+            best_f1 = 0.0
+            best_threshold = 0.5
+            threshold_results = {}
+            
+            # 0.1 ile 0.9 arasında 0.05 adımlarla test et
+            for threshold in np.arange(0.1, 1.0, 0.05):
+                y_pred = (y_proba >= threshold).astype(int)
+                f1 = f1_score(y_test, y_pred, zero_division=0)
+                threshold_results[threshold] = f1
+                
+                if f1 > best_f1:
+                    best_f1 = f1
+                    best_threshold = threshold
+            
+            logging.info(f"  Threshold optimizasyonu tamamlandı:")
+            logging.info(f"    Optimal threshold: {best_threshold:.2f}")
+            logging.info(f"    Maksimum F1: {best_f1:.4f}")
+            logging.info(f"    Default threshold (0.5) F1: {threshold_results.get(0.5, 0.0):.4f}")
+            
+            return best_threshold, best_f1
+        
+        except Exception as e:
+            logging.warning(f"Threshold optimizasyonu başarısız, default 0.5 kullanılacak: {e}")
+            return 0.5, -1.0
+
     def initiate(
         self,
         X_train: np.ndarray,
@@ -266,6 +316,13 @@ class ModelTrainer:
             # En iyi parametrelerle yeniden oluştur ve eğit
             best_model_obj.set_params(**best_params)
             best_model_obj.fit(X_train, y_train)
+
+            # ─── ADIM 4b: Optimal Threshold Bulma ───
+            logging.info("  Optimal decision threshold aranıyor...")
+            optimal_threshold, threshold_f1 = self._optimize_threshold(best_model_obj, X_test, y_test)
+            
+            # Model nesnesi içinde threshold'u sakla (predict_pipeline tarafından kullanılacak)
+            best_model_obj.optimal_threshold = optimal_threshold
 
             save_object(self.config.model_path, best_model_obj)
             logging.info(f"  Model kaydedildi → {self.config.model_path}")

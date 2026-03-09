@@ -297,16 +297,23 @@ class PredictPipeline:
                 X = X.toarray()
 
             # ─── 6. Model ile tahmin ───
-            prediction = int(self._model.predict(X)[0])
-
-            # Olasılık tahmini (model destekliyorsa)
+            # Önce predict_proba ile olasılık al (optimal threshold için)
             churn_proba = 0.0
             try:
                 proba_arr = self._model.predict_proba(X)
                 churn_proba = float(proba_arr[0][1])  # P(Churn=1)
             except (AttributeError, IndexError):
                 logging.warning("  ⚠ Model predict_proba desteklemiyor")
-                churn_proba = float(prediction)  # Fallback: 0.0 veya 1.0
+                # Fallback: predict() ile tahmin yap
+                prediction = int(self._model.predict(X)[0])
+                churn_proba = float(prediction)
+
+            # Optimal threshold'u kullan (model_trainer tarafından optimize edilen)
+            # Default: 0.5 (trained model'de optimal_threshold attribute'ı varsa onu kullan)
+            threshold = getattr(self._model, 'optimal_threshold', 0.5)
+            prediction = 1 if churn_proba >= threshold else 0
+
+            logging.info(f"  Tahmin olasılığı: {churn_proba:.4f} | Threshold: {threshold:.2f}")
 
             # ─── 7. Risk seviyesi ───
             risk = classify_risk(churn_proba)
