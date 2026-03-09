@@ -16,44 +16,63 @@
 models:
 
   # --- LOJİSTİK REGRESYON ---
-  # En basit baseline. Yorumlanabilir, hızlı, feature importance verir.
-  # class_weight: "balanced" → azınlık sınıfına (Churn=1) daha fazla ağırlık verir.
+  # Baseline. Tek parametre kombinasyonu → hızlı.
   LogisticRegression:
-    C: [0.01, 0.1, 1.0, 10.0]         # Regularization gücü (küçük C = güçlü reg.)
-    penalty: ["l2"]                     # L2 regularization (Ridge)
-    solver: ["lbfgs"]                   # Küçük-orta veri setleri için uygun
-    max_iter: [1000]                    # Yakınsama için yeterli iterasyon
-    class_weight: ["balanced"]          # İmbalanced data için ZORUNLU
+    C: [0.1]                           # Önceki en iyi değer
+    penalty: ["l2"]
+    solver: ["lbfgs"]
+    max_iter: [1000]
+    class_weight: ["balanced"]
 
   # --- RANDOM FOREST ---
-  # Ensemble yöntem. Overfitting'e dayanıklı, feature importance sağlar.
-  # class_weight: "balanced" → her ağaçta churn sınıfına daha fazla ağırlık verir.
+  # Tek kombinasyon → hızlı benchmark.
   RandomForestClassifier:
-    n_estimators: [100, 300]            # Ağaç sayısı (fazla = daha stabil ama yavaş)
-    max_depth: [5, 10, null]            # Ağaç derinliği (null = sınırsız)
-    min_samples_split: [5, 10]          # Dallanma için gereken minimum örnek
-    class_weight: ["balanced"]          # İmbalanced data için ZORUNLU
-    random_state: [42]                  # Tekrarlanabilirlik
+    n_estimators: [300]                # Önceki en iyi değer
+    max_depth: [null]                  # Sınırsız derinlik
+    min_samples_split: [5]             # Önceki en iyi değer
+    class_weight: ["balanced"]
+    random_state: [42]
 
   # --- XGBOOST ---
-  # Gradient boosting. Genellikle en iyi performansı verir.
-  # scale_pos_weight: pozitif sınıfın ağırlığı (≈ neg_count / pos_count)
-  # Telco verisi: ~5174 No / ~1869 Yes ≈ 2.77 → 3.0 kullanıyoruz
+  # Önceki en iyi params. Optuna daha ince arama yapacak.
   XGBClassifier:
-    learning_rate: [0.01, 0.05, 0.1]   # Adım büyüklüğü (küçük = yavaş ama stabil)
-    max_depth: [3, 5, 7]               # Ağaç derinliği
-    n_estimators: [100, 300]            # Boosting round sayısı
-    subsample: [0.8]                    # Her ağaçta verinin %80'ini kullan (overfitting önler)
-    colsample_bytree: [0.8]            # Her ağaçta feature'ların %80'ini kullan
-    scale_pos_weight: [3.0]            # İmbalanced data: churn sınıfına 3x ağırlık
-    eval_metric: ["logloss"]           # Binary classification kaybı
+    learning_rate: [0.05]              # Önceki en iyi değer
+    max_depth: [7]                     # Önceki en iyi değer
+    n_estimators: [300]                # Önceki en iyi değer
+    subsample: [0.8]
+    colsample_bytree: [0.8]
+    scale_pos_weight: [3.0]
+    eval_metric: ["logloss"]
     random_state: [42]
 
   # --- GRADIENT BOOSTING (sklearn) ---
-  # XGBoost'un sklearn versiyonu. Daha basit ama yeterli.
+  # Tek kombinasyon.
   GradientBoostingClassifier:
-    n_estimators: [100, 300]            # Boosting round sayısı
-    learning_rate: [0.05, 0.1]         # Adım büyüklüğü
-    max_depth: [3, 5]                  # Ağaç derinliği
-    subsample: [0.8]                   # Verinin %80'i
+    n_estimators: [300]
+    learning_rate: [0.05]
+    max_depth: [5]
+    subsample: [0.8]
     random_state: [42]
+
+  # --- LIGHTGBM ---
+  # Önceki en iyi params. 1 kombinasyon → ~30 saniye.
+  LGBMClassifier:
+    learning_rate: [0.01]              # Önceki en iyi değer
+    max_depth: [9]                     # Önceki en iyi değer
+    n_estimators: [400]                # Önceki en iyi değer
+    num_leaves: [127]                  # Önceki en iyi değer
+    subsample: [0.8]
+    colsample_bytree: [0.8]
+    min_child_samples: [20]
+    class_weight: ["balanced"]
+    random_state: [42]
+
+  # --- CATBOOST ---
+  # Önceki en iyi params. 1 kombinasyon → ~1-2 dakika.
+  CatBoostClassifier:
+    learning_rate: [0.05]              # Önceki en iyi değer
+    depth: [6]                         # Önceki en iyi değer
+    iterations: [300]                  # Yeterli round
+    l2_leaf_reg: [3]                   # Hafif regularization
+    auto_class_weights: ["Balanced"]
+    random_seed: [42]

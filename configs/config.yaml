@@ -36,4 +36,4 @@ id_col: "customerID"      # Satır kimliği — modele girmemeli, drop edilecek
 # --- CROSS-VALIDATION ---
 cv:
   n_folds: 5              # 5-Fold Stratified Cross-Validation
-  scoring: "f1"           # Churn imbalanced → F1 daha anlamlı (accuracy yanıltıcı)
+  scoring: "recall"       # Churn: Kaçırılan müşteri = para kaybı → Recall öncelikli

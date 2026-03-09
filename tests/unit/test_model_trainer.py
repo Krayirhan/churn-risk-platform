@@ -61,11 +61,11 @@ class TestModelDictionary:
         assert isinstance(models, dict)
 
     def test_get_models_has_four_models(self):
-        """Tam olarak 4 model tanımlı olmalı."""
+        """Tam olarak 6 model tanımlı olmalı (LightGBM + CatBoost eklendi)."""
         from src.components.model_trainer import ModelTrainer
         trainer = ModelTrainer()
         models = trainer._get_models()
-        assert len(models) == 4, f"4 model bekleniyordu, {len(models)} bulundu"
+        assert len(models) == 6, f"6 model bekleniyordu, {len(models)} bulundu"
 
     def test_all_models_have_fit_method(self):
         """Her model sklearn API'sine uygun olmalı (fit metodu var)."""

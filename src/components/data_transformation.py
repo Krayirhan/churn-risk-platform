@@ -146,6 +146,32 @@ class TelcoCleaner:
         return out
 
     @staticmethod
+    def winsorize_outliers(
+        df: pd.DataFrame,
+        cols: list,
+        factor: float = 3.0
+    ) -> pd.DataFrame:
+        """
+        IQR tabanlı aykırı değer kırpması (Winsorization).
+
+        NEDEN?
+          MonthlyCharges ve TotalCharges'da uç değerler modeli yanltır.
+          factor=3.0 → yalnızca aşırı uç noktaları kırpar, normal dağılımı korur.
+        """
+        out = df.copy()
+        for col in cols:
+            if col not in out.columns:
+                continue
+            series = pd.to_numeric(out[col], errors="coerce")
+            q1 = series.quantile(0.25)
+            q3 = series.quantile(0.75)
+            iqr = q3 - q1
+            lower = q1 - factor * iqr
+            upper = q3 + factor * iqr
+            out[col] = series.clip(lower=lower, upper=upper)
+        return out
+
+    @staticmethod
     def basic_impute(df: pd.DataFrame) -> pd.DataFrame:
         """
         Kritik temizlikleri yapar. Geri kalan eksiklikler sklearn
@@ -153,6 +179,10 @@ class TelcoCleaner:
         """
         out = df.copy()
         out = TelcoCleaner.clean_total_charges(out)
+        # Aykırı değer kırpması: MonthlyCharges ve TotalCharges için
+        out = TelcoCleaner.winsorize_outliers(
+            out, ["MonthlyCharges", "TotalCharges"]
+        )
         return out
 
 
@@ -289,7 +319,7 @@ class TelcoFeatureEngineer:
         # ─── FEATURE 10: TenureBucket ───────────────────────
         # tenure'u segmentlere ayır: 0-6, 7-12, 13-24, 25-48, 49-72, 72+
         # NEDEN? Sürekli değişken yerine kategorik segment → non-linear ilişkileri
-        # yakalar. Özellikle ağaç modelleri için faydalı olmasa da 
+        # yakalar. Özellikle ağaç modelleri için faydalı olmasa da
         # lojistik regresyon için çok yararlı.
         if "tenure" in out.columns:
             out["TenureBucket"] = pd.cut(
@@ -297,6 +327,65 @@ class TelcoFeatureEngineer:
                 bins=self.config.tenure_bins,
                 labels=self.config.tenure_labels
             ).astype(str)
+
+        # ════════════════════════════════════════════════════════
+        # YENİ FEATURES — Feature Engineering Upgrade v2
+        # ════════════════════════════════════════════════════════
+
+        # ─── FEATURE 11: ContractTenureScore ─────────────────
+        # Kontrat türü × Tenure kombinasyonu risk skoru
+        # NEDEN? Month-to-month + kısa tenure = EN YÜKSEK risk
+        # Two-year sözleşme = düşük risk (iki yıl boyunca gidemez)
+        if "Contract" in out.columns and "tenure" in out.columns:
+            contract_lower = out["Contract"].fillna("").astype(str).str.lower()
+            tenure_val = pd.to_numeric(out["tenure"], errors="coerce").fillna(0)
+            contract_num = np.where(
+                contract_lower.str.contains("two"), 0,
+                np.where(contract_lower.str.contains("one"), 1, 2)  # month = 2
+            )
+            # Kısa tenure (≤12 ay) ile çarparak risk yoğunluğunu artır
+            short_tenure_factor = np.where(tenure_val <= 12, 2.0, 1.0)
+            out["ContractTenureScore"] = (contract_num * short_tenure_factor).astype(float)
+        else:
+            out["ContractTenureScore"] = 0.0
+
+        # ─── FEATURE 12: ServiceAdoptionRate ─────────────────
+        # Mevcut hizmetler içinde alınan hizmet oranı (0–1)
+        # NEDEN? Az hizmet alan müşteri = bağlılık düşük = churn riski yüksek
+        max_services = max(len(existing_addons), 1)
+        out["ServiceAdoptionRate"] = (
+            out["TotalAddOnServices"].clip(upper=max_services) / max_services
+        ).astype(float)
+
+        # ─── FEATURE 13: HighValueAtRisk ───────────────────
+        # Yüksek aylık ücret + Month-to-Month sözleşme = kritik risk
+        # NEDEN? Pahalı plan + istediğinde çıkabilir = en yüksek churn + gelir kaybı
+        if "MonthlyCharges" in out.columns and "IsMonthToMonth" in out.columns:
+            monthly = pd.to_numeric(out["MonthlyCharges"], errors="coerce")
+            high_charge = (monthly >= monthly.median()).astype(int)
+            out["HighValueAtRisk"] = high_charge * out["IsMonthToMonth"]
+        else:
+            out["HighValueAtRisk"] = 0
+
+        # ─── FEATURE 14: DigitalRiskScore ────────────────────
+        # Kağıtsız fatura + Electronic check → dijital risk skoru (0, 1 veya 2)
+        # NEDEN? Bu kombinasyon en yüksek churn oranlarını gösteriyor
+        paperless = out["IsPaperless"] if "IsPaperless" in out.columns else 0
+        electronic = out["IsElectronicCheck"] if "IsElectronicCheck" in out.columns else 0
+        out["DigitalRiskScore"] = (paperless + electronic).astype(int)
+
+        # ─── FEATURE 15: SeniorHighCost ─────────────────────
+        # Yaşlı müşteri + Yüksek aylık ücret kombinasyonu
+        # NEDEN? Sabit gelirli yaşlı müşteri pahalı hizmetten çıkabilir
+        if "SeniorCitizen" in out.columns and "MonthlyCharges" in out.columns:
+            senior = pd.to_numeric(
+                out["SeniorCitizen"], errors="coerce"
+            ).fillna(0).astype(int)
+            monthly = pd.to_numeric(out["MonthlyCharges"], errors="coerce")
+            high_charge = (monthly >= monthly.median()).astype(int)
+            out["SeniorHighCost"] = senior * high_charge
+        else:
+            out["SeniorHighCost"] = 0
 
         return out
 
@@ -345,7 +434,10 @@ class DataTransformation:
             engineered_numerics = [
                 "LoyaltyIndex", "TotalAddOnServices", "UnitCost",
                 "AvgPaidPerMonth", "ChargeGap", "RiskScope_Fiber_NoSupport_NoSec",
-                "IsMonthToMonth", "IsPaperless", "IsElectronicCheck"
+                "IsMonthToMonth", "IsPaperless", "IsElectronicCheck",
+                # YENİ — Feature Engineering Upgrade v2
+                "ContractTenureScore", "ServiceAdoptionRate", "HighValueAtRisk",
+                "DigitalRiskScore", "SeniorHighCost",
             ]
             num_cols = [
                 c for c in (self.config.numeric_cols + engineered_numerics)
