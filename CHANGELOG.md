@@ -1,169 +1,138 @@
 # Changelog
 
-All notable changes to the Telco Customer Churn Risk Platform will be documented in this file.
+All notable changes to the Churn Risk Platform will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
 ## [Unreleased]
 
+### Planned
+- SQLite prediction history for persistent `todayPredictions` counter
+- SHAP values for per-prediction explanations
+- Real-time drift dashboard (Grafana)
+- Kubernetes deployment manifests
+- Scheduled retraining (APScheduler)
+- Alerting on drift (Email / Slack)
+
+---
+
+## [0.3.0] - 2026-03-10
+
 ### Added
-- Comprehensive project documentation (README, API docs, deployment guide)
-- Architecture diagrams and system design documentation
+- **6-Model Comparison Table** — frontend dashboard now shows all 6 models ranked by weighted score
+  - Columns: Model, Recall, F1, Precision, ROC-AUC, Accuracy, Ağırlıklı Skor
+  - Accuracy computed for all models from confusion matrix math (validated against stored metrics)
+  - Winner badge and highlighted row for selected model
+- **`GET /model-comparison` endpoint** — returns full ranked model list as JSON
+- **C# proxy** — `PythonApiService.GetModelComparisonAsync()` + `ChurnController.GetModelComparison()`
+- **Frontend stat cards redesigned from scratch** with correct KPI hierarchy:
+  - Card 1 — Servis Durumu: operational (Aktif / Hata), not a model metric
+  - Card 2 — Churn Recall: primary big number + AUC + F1 + Accuracy sub-labels
+  - Card 3 — Veri Drift: drift monitoring with dynamic icon + color
+  - Card 4 — Tahmin Yapıldı: session prediction count
+- **`artifacts/model_comparison.json`** — saved on every training run, includes all 6 models with accuracy
+
+### Changed
+- Primary metric in Card 2 changed from **Accuracy (73.24%)** to **Recall (80.2%)** — the actual optimization target
+- `updateHealthStatus()`, `updateModelInfo()`, `updateDriftStatus()` fully rewritten to match new element IDs
+- `model_trainer.py` now saves `test_accuracy` per model in comparison report
+
+### Fixed
+- Old element ID `modelStatus` removed — replaced with `serviceStatus`, `serviceDetail`, `serviceIconBg`
+- Error handler in `checkSystemHealth()` updated to new card IDs
+
+---
+
+## [0.2.0] - 2026-03-01
+
+### Added
+- **6 ML models** (up from 4): LogisticRegression, RandomForest, XGBClassifier, GradientBoostingClassifier, LGBMClassifier, CatBoostClassifier
+- **Optuna Bayesian hyperparameter optimization** — 60 trials for XGB, LGBM, CatBoost after GridSearchCV
+- **SMOTE oversampling** — class imbalance handled in training pipeline
+- **Recall-optimized model selection** — criterion: `0.7 × Recall + 0.3 × F1`
+- **Threshold optimization** — sweep from 0.30–0.60, LogisticRegression optimal at **0.40**
+- **Real confidence score** — derived from `predict_proba`, replaces placeholder
+- **Case-insensitive input normalization** — Pydantic model normalizes field keys
+- **C# .NET 8.0 API Gateway** (`backend-csharp/`) — 5 endpoints, Swagger, CORS
+- **Frontend Dashboard** (`frontend-dashboard/`) — HTML/CSS/JS, real-time status, prediction form
+- **`GET /model-comparison`** — Python endpoint
+- Prediction logging fix — emoji removed from `metrics.json` (Windows UTF-8 crash fix)
+
+### Changed
+- **Winner model changed**: XGBClassifier → **LogisticRegression** (Recall=80.2%, AUC=0.8453, F1=0.6141)
+- Model selection scoring: F1-only → weighted `0.7 × Recall + 0.3 × F1`
+- `model_params.yaml` extended with grids for all 6 models
+
+### Fixed
+- `metrics.json` emoji crash on Windows (UTF-8 encoding)
+- CI whitespace lint ignore (W291, W293, W391)
+- Flake8 errors: F401, F541, F841, E128, E261, E302, E231 — all resolved
+
+---
 
 ## [0.1.0] - 2026-02-16
 
 ### Added
 
-#### Phase 1: Project Setup & Configuration
-- Initial project structure with modular architecture
-- Configuration management via YAML files (`training_config.yaml`, `monitoring.yaml`)
-- Custom exception handling and structured logging system
-- Docker containerization with multi-stage builds
-- Docker Compose for local development
-- GitHub Actions CI/CD pipeline (lint → test → build)
-- Pre-commit hooks for code quality
-- Comprehensive `.gitignore` and `.dockerignore`
+#### Phase 1 — Project Setup & Configuration
+- Modular project structure (`src/components`, `src/pipeline`, `src/utils`)
+- Config-driven architecture — all behavior via YAML (`config.yaml`, `model_params.yaml`, `monitoring.yaml`, `processing.yaml`)
+- Custom exception handling and structured timestamped logging
+- Docker multi-stage build + Docker Compose (3-service orchestration)
+- GitHub Actions CI/CD: lint → test → Docker build → GitHub Release
+- Pre-commit hooks (flake8, black, isort)
 
-#### Phase 2: Data Science Notebook
-- Exploratory Data Analysis (EDA) notebook (`01_eda_feature_engineering.ipynb`)
-- Feature engineering analysis:
-  - Outlier detection and handling strategies
-  - Missing value imputation methods
-  - Feature encoding (Label, OneHot, Target)
-  - Feature scaling techniques
-- Model performance benchmarking:
-  - XGBoost (best: 81.27% accuracy, 85.01% ROC AUC)
-  - Random Forest (78.94% accuracy)
-  - AdaBoost (79.73% accuracy)
-- Statistical validation and hypothesis testing
+#### Phase 2 — Data Science Notebook
+- EDA notebook `01_analysis_and_engineering.ipynb`
+- Feature engineering analysis: outlier detection, imputation, encoding, scaling
+- Statistical validation: Chi-Square, Welch T-Test, VIF analysis
+- 10 custom business-logic features:
+  `IsMonthToMonth`, `LoyaltyIndex`, `RiskScope`, `ChargeGap`, `IsElectronicCheck`,
+  `UnitCost`, `IsPaperless`, `AvgServiceCount`, `TenureBin`, `ChargePerTenure`
 
-#### Phase 3: Model Engineering Components
-- **Data Ingestion** (`src/components/data_ingestion.py`):
-  - Train/test split with stratification
-  - Data validation and integrity checks
-  - Artifact management
-- **Data Transformation** (`src/components/data_transformation.py`):
-  - Automated feature preprocessing pipeline
-  - Outlier capping with IQR method
-  - Missing value imputation (median/mode)
-  - Feature encoding and scaling
-  - Preprocessor object persistence
-- **Model Trainer** (`src/components/model_trainer.py`):
-  - Multi-algorithm training (XGBoost, Random Forest, AdaBoost)
-  - GridSearchCV hyperparameter tuning
-  - Best model selection with configurable thresholds
-  - Model serialization
-- **Model Evaluation** (`src/components/model_evaluation.py`):
-  - Comprehensive metrics (accuracy, precision, recall, F1, ROC AUC)
-  - Confusion matrix generation
-  - Feature importance analysis
-  - JSON report generation
-- **Training Pipeline** (`src/pipeline/train_pipeline.py`):
-  - End-to-end orchestration
-  - Error handling and logging
-- **Prediction Pipeline** (`src/pipeline/predict_pipeline.py`):
-  - Single and batch prediction support
-  - Model/preprocessor loading
-  - Input validation
-- Test suite: 98 comprehensive tests with 82% coverage
+#### Phase 3 — ML Pipeline Components
+- **Data Ingestion** — CSV loading, stratified 80/20 split, artifact management
+- **Data Transformation** — ColumnTransformer, IQR capping, median/mode imputation, OneHot encoding
+- **Model Trainer** — multi-algorithm GridSearchCV, best model selection with min F1 threshold
+- **Model Evaluation** — full metrics (accuracy, F1, recall, precision, ROC-AUC, PR-AUC), confusion matrix, ROC/PR curves
+- **Training Pipeline** — end-to-end orchestration with error propagation
 
-#### Phase 4: Serve & API
-- **FastAPI REST API** (`app.py`):
-  - `GET /` - Welcome endpoint
-  - `GET /health` - Service health check
-  - `GET /model-info` - Model metadata and metrics
-  - `POST /predict` - Single customer prediction
-  - `POST /predict/batch` - Batch predictions
-- **CLI Interface** (`main.py`):
-  - `--train` - Execute training pipeline
-  - `--predict` - Interactive prediction mode
-  - `--serve` - Start FastAPI server
-  - `--info` - Display model metrics
-- Pydantic models for request/response validation
-- CORS middleware for cross-origin requests
-- Automatic OpenAPI/Swagger documentation
-- Uvicorn ASGI server integration
-- API test suite (10 tests)
+#### Phase 4 — FastAPI REST API
+- 11 REST endpoints with Swagger/OpenAPI docs
+- Pydantic request/response validation
+- API key authentication (`X-API-Key` header)
+- Rate limiting (sliding window, configurable)
+- CORS middleware
+- Batch prediction (up to 100 customers/request)
+- CLI entry point (`main.py --train / --serve / --predict / --monitor`)
 
-#### Phase 5: Monitor & Retrain
-- **Drift Detection** (`src/components/drift_detector.py`):
-  - Kolmogorov-Smirnov statistical test
-  - Population Stability Index (PSI) calculation
-  - Feature-level drift analysis
-  - Alert threshold configuration
-- **Prediction Logger** (`src/components/prediction_logger.py`):
-  - JSON-based prediction history
-  - Metadata tracking (timestamp, model version, confidence)
-  - Query interface with filtering
-- **Model Monitor** (`src/components/model_monitor.py`):
-  - Drift monitoring orchestration
-  - Performance degradation detection
-  - Alert generation system
-  - Comprehensive monitoring reports
-- **Retrain Pipeline** (`src/pipeline/retrain_pipeline.py`):
-  - Automated retraining workflow
-  - Performance comparison (old vs new model)
-  - Conditional model replacement
-  - Retraining history tracking
-- **API Endpoints**:
-  - `GET /monitor/stats` - Prediction statistics
-  - `GET /monitor/drift` - Drift detection results
-  - `GET /monitor/health-report` - Monitoring status
-  - `POST /monitor/retrain` - Trigger retraining
-  - `GET /monitor/retrain-history` - Retraining history
-- **CLI Commands**:
-  - `--monitor` - Run drift detection
-  - `--retrain` - Trigger retraining
-- Monitoring configuration (`configs/monitoring.yaml`)
-- Test suite: 60 new tests (158 total, 85% coverage)
+#### Phase 5 — Monitoring & Retraining
+- **Drift Detector** — KS test (numerical) + PSI (categorical), feature-level alerts
+- **Prediction Logger** — daily JSONL with input hash, probability, risk level, model version
+- **Model Monitor** — drift orchestration, performance degradation detection
+- **Retrain Pipeline** — automated retraining with cooldown, old/new metric comparison
+- 5 monitoring endpoints: `/monitor/stats`, `/monitor/drift`, `/monitor/health-report`, `/monitor/retrain`, `/monitor/retrain-history`
 
-### Fixed
-- Build system configuration in `pyproject.toml` (setuptools backend)
-- Flake8 linting errors (94 errors → 0):
-  - Removed unused imports (F401)
-  - Fixed empty f-strings (F541)
-  - Fixed continuation line indentation (E128)
-  - Fixed inline comment spacing (E261)
-  - Added blank lines before functions/classes (E302)
-  - Fixed type hint spacing (E231)
-- CI workflow: Added whitespace error exceptions (W291, W293, W391)
+#### Phase 6 — Quality & Packaging
+- 158 tests, 85% coverage (unit + integration)
+- `pyproject.toml` — PEP 621 metadata, project URLs, classifiers
+- `MANIFEST.in`, `.readthedocs.yml`
+- `Makefile` with 15+ commands
 
-### Changed
-- Updated CI workflow to extend flake8 ignore list
-- Improved error messages and logging throughout codebase
-- Enhanced test coverage across all modules
-
-## [0.0.1] - 2026-01-15
-
-### Added
-- Initial repository setup
-- Basic project skeleton
-- Dataset integration (Telco Customer Churn from Kaggle)
+#### Phase 7 — Documentation
+- `README.md` — badges, quick start, architecture diagram, full API reference
+- `CHANGELOG.md`, `LICENSE` (MIT), `CONTRIBUTING.md`
+- `docs/API.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOYMENT.md`, `docs/PACKAGING.md`
 
 ---
 
-## Version History Summary
+## Version History
 
-| Version | Date       | Key Features                                    |
-|---------|------------|-------------------------------------------------|
-| 0.1.0   | 2026-02-16 | Full ML pipeline, API, monitoring, CI/CD        |
-| 0.0.1   | 2026-01-15 | Initial setup                                   |
-
----
-
-## Maintenance Notes
-
-### Adding New Features
-When adding features to this changelog:
-1. Place new changes under `[Unreleased]` section
-2. Use appropriate subsections: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
-3. Be specific and include relevant file references
-4. Update version number and date when releasing
-
-### Release Process
-1. Move `[Unreleased]` changes to new version section
-2. Update version in `pyproject.toml`
-3. Create Git tag: `git tag -a v0.1.0 -m "Release v0.1.0"`
-4. Push tag: `git push origin v0.1.0`
-5. Create GitHub release with changelog excerpt
+| Version | Date       | Highlight                                                        |
+|---------|------------|------------------------------------------------------------------|
+| 0.3.0   | 2026-03-10 | Frontend card redesign, 6-model comparison table with Accuracy   |
+| 0.2.0   | 2026-03-01 | 6 models, Optuna, SMOTE, threshold opt, C# gateway, frontend     |
+| 0.1.0   | 2026-02-16 | Full ML pipeline, 11-endpoint API, monitoring, CI/CD, 158 tests  |

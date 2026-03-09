@@ -255,6 +255,7 @@ curl -X POST http://localhost:8000/predict \
 | `GET` | `/` | API information |
 | `GET` | `/health` | Service health check |
 | `GET` | `/model-info` | Active model name and metrics |
+| `GET` | `/model-comparison` | All 6 models ranked by weighted score |
 | `POST` | `/predict` | Single customer prediction |
 | `POST` | `/predict/batch` | Batch prediction (max 100) |
 | `GET` | `/monitor/stats` | Prediction statistics over N days |
@@ -364,7 +365,7 @@ churn-risk-platform/
 │   ├── components/
 │   │   ├── data_ingestion.py       #   CSV/NPZ loading, stratified split
 │   │   ├── data_transformation.py  #   Cleaning, feature engineering, ColumnTransformer
-│   │   ├── model_trainer.py        #   GridSearchCV with 4 algorithms
+│   │   ├── model_trainer.py        #   GridSearchCV + Optuna with 6 algorithms + SMOTE
 │   │   ├── model_evaluation.py     #   Metrics, ROC/PR curves, confusion matrix
 │   │   ├── drift_detector.py       #   KS test + PSI drift detection
 │   │   ├── prediction_logger.py    #   JSONL daily prediction logging
@@ -442,7 +443,7 @@ All behavior is controlled via YAML — no hardcoded values.
 | File | Purpose |
 |------|---------|
 | `configs/config.yaml` | Data paths, train/test split, target column |
-| `configs/model_params.yaml` | Hyperparameter grids for 4 algorithms |
+| `configs/model_params.yaml` | Hyperparameter grids for 6 algorithms |
 | `configs/monitoring.yaml` | Drift thresholds, retrain triggers |
 | `configs/processing.yaml` | Column types, imputation, scaling, encoding |
 
@@ -450,8 +451,8 @@ All behavior is controlled via YAML — no hardcoded values.
 
 ## Roadmap
 
-- [x] 4-model comparison with GridSearchCV and class balancing
-- [x] FastAPI inference service (10 endpoints, Swagger docs)
+- [x] 6-model comparison with GridSearchCV + Optuna (60 trials) + SMOTE
+- [x] FastAPI inference service (11 endpoints, Swagger docs)
 - [x] 10 custom feature engineering features
 - [x] Data drift monitoring (KS test + PSI)
 - [x] Automated retraining pipeline with cooldown
@@ -459,6 +460,8 @@ All behavior is controlled via YAML — no hardcoded values.
 - [x] CI/CD with GitHub Actions
 - [x] Docker multi-container deployment
 - [x] C# API Gateway + Frontend Dashboard
+- [x] Dynamic model comparison table in frontend
+- [x] Recall-optimized threshold (0.40) via threshold sweep
 - [x] 158 tests, 85% coverage
 - [x] Security: API key auth, rate limiting, CORS
 - [ ] SHAP values for per-prediction explanations
