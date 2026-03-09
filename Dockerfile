@@ -53,20 +53,17 @@ RUN groupadd --gid 1000 appuser && \
 
 WORKDIR /app
 
-# Builder'dan derlenmiş wheel'ları kur
+# Builder'dan derlenmiş wheel'ları ve proje dosyalarını kopyala
 COPY --from=builder /wheels /wheels
-COPY requirements.txt .
+COPY requirements.txt pyproject.toml setup.py ./
+COPY src/ ./src/
+COPY configs/ ./configs/
+COPY app.py main.py ./
+
+# pip install et (requirements.txt'deki -e . için setup.py gerekli)
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
     rm -rf /wheels requirements.txt
-
-# Proje dosyalarını kopyala (sırayla — cache dostu)
-COPY configs/ ./configs/
-COPY src/ ./src/
-COPY app.py main.py setup.py ./
-
-# Paketi editable modda kur (src/ import'ları çalışsın)
-RUN pip install --no-cache-dir -e .
 
 # Artifact ve data dizinlerini oluştur (volume mount noktaları)
 RUN mkdir -p artifacts data/raw logs models && \
